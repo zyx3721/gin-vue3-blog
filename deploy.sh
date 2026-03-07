@@ -120,16 +120,20 @@ show_usage() {
     echo "  $0 <command>"
     echo ""
     echo -e "${BOLD}可用命令:${RESET}"
-    echo -e "  ${GREEN}build${RESET}   - 重新构建并部署项目（编译后端 + 构建前端）"
-    echo -e "  ${GREEN}start${RESET}   - 启动服务（仅启动后端服务，不构建前端）"
-    echo -e "  ${GREEN}stop${RESET}    - 停止所有服务"
-    echo -e "  ${GREEN}status${RESET}  - 查看服务运行状态"
+    echo -e "  ${GREEN}build${RESET}            - 重新构建并部署项目（编译后端 + 构建前端）"
+    echo -e "  ${GREEN}build-backend${RESET}    - 单独重新编译并重启后端服务"
+    echo -e "  ${GREEN}build-frontend${RESET}   - 单独重新构建前端静态资源"
+    echo -e "  ${GREEN}start${RESET}            - 启动服务（仅启动后端服务，不构建前端）"
+    echo -e "  ${GREEN}stop${RESET}             - 停止所有服务"
+    echo -e "  ${GREEN}status${RESET}           - 查看服务运行状态"
     echo ""
     echo -e "${BOLD}示例:${RESET}"
-    echo "  $0 build    # 完整构建并部署"
-    echo "  $0 start    # 启动服务"
-    echo "  $0 stop     # 停止服务"
-    echo "  $0 status   # 查看状态"
+    echo "  $0 build            # 完整构建并部署"
+    echo "  $0 build-backend    # 单独重新编译并重启后端"
+    echo "  $0 build-frontend   # 单独重新构建前端"
+    echo "  $0 start            # 启动服务"
+    echo "  $0 stop             # 停止服务"
+    echo "  $0 status           # 查看状态"
     echo ""
     echo -e "${YELLOW}${BOLD}注意:${RESET}"
     echo -e "  使用前请先修改脚本中的 ${CYAN}PROJECT_ROOT${RESET} 变量为实际的项目路径"
@@ -281,6 +285,42 @@ build_frontend() {
 }
 
 # ==================== 命令实现 ====================
+# build-backend 命令：单独重新编译并重启后端服务
+cmd_build_backend() {
+    log_step "开始单独重新构建后端..."
+    echo ""
+
+    # 停止后端服务
+    if check_port $BACKEND_PORT; then
+        local pid=$(get_pid_by_port $BACKEND_PORT)
+        log_warn "发现运行中的后端服务（PID: $pid），正在停止..."
+        stop_process "$pid" "Go 后端服务"
+    fi
+    echo ""
+
+    # 编译后端
+    compile_backend || exit 1
+    echo ""
+
+    # 启动后端
+    start_backend || exit 1
+    echo ""
+
+    log_success "后端重新构建并启动完成！"
+}
+
+# build-frontend 命令：单独重新构建前端静态资源
+cmd_build_frontend() {
+    log_step "开始单独重新构建前端..."
+    echo ""
+
+    # 构建前端
+    build_frontend || exit 1
+    echo ""
+
+    log_success "前端重新构建完成！"
+}
+
 # build 命令：重新构建并部署项目
 cmd_build() {
     log_step "开始重新构建项目..."
@@ -405,6 +445,12 @@ main() {
     case "$command" in
         build)
             cmd_build
+            ;;
+        build-backend)
+            cmd_build_backend
+            ;;
+        build-frontend)
+            cmd_build_frontend
             ;;
         start)
             cmd_start
