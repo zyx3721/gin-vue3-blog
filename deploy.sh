@@ -31,7 +31,7 @@ BACKEND_DIR="blog-backend"
 FRONTEND_DIR="blog-frontend"
 BACKEND_BIN="blog-backend"
 GITEE_API_BIN="gitee-calendar-api"
-FRONTEND_MAX_MEMORY=512  # 前端构建最大内存限制（MB），服务器内存小时建议调低，如 512
+FRONTEND_MAX_MEMORY=1024  # 前端构建最大内存限制（MB）
 
 # ==================== 日志函数 ====================
 # 输出信息日志
@@ -269,7 +269,7 @@ compile_backend() {
 # 构建前端
 # @param memory int 最大内存限制（MB），默认 512MB，可通过第一个参数自定义
 build_frontend() {
-    local max_memory=${1:-512}
+    local max_memory=${1:-1024}
     log_step "构建前端静态资源（最大内存: ${max_memory}MB）"
     
     cd "$PROJECT_ROOT/$FRONTEND_DIR" || {
