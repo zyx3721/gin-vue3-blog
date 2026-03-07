@@ -31,6 +31,7 @@ BACKEND_DIR="blog-backend"
 FRONTEND_DIR="blog-frontend"
 BACKEND_BIN="blog-backend"
 GITEE_API_BIN="gitee-calendar-api"
+FRONTEND_MAX_MEMORY=512  # 前端构建最大内存限制（MB），服务器内存小时建议调低，如 512
 
 # ==================== 日志函数 ====================
 # 输出信息日志
@@ -266,8 +267,10 @@ compile_backend() {
 }
 
 # 构建前端
+# @param memory int 最大内存限制（MB），默认 512MB，可通过第一个参数自定义
 build_frontend() {
-    log_step "构建前端静态资源"
+    local max_memory=${1:-512}
+    log_step "构建前端静态资源（最大内存: ${max_memory}MB）"
     
     cd "$PROJECT_ROOT/$FRONTEND_DIR" || {
         log_error "无法进入前端目录: $PROJECT_ROOT/$FRONTEND_DIR"
@@ -275,7 +278,7 @@ build_frontend() {
     }
     
     log_info "开始构建前端..."
-    if pnpm build; then
+    if NODE_OPTIONS="--max-old-space-size=${max_memory}" pnpm build; then
         log_success "前端构建成功"
         return 0
     else
@@ -315,7 +318,7 @@ cmd_build_frontend() {
     echo ""
 
     # 构建前端
-    build_frontend || exit 1
+    build_frontend $FRONTEND_MAX_MEMORY || exit 1
     echo ""
 
     log_success "前端重新构建完成！"
@@ -347,7 +350,7 @@ cmd_build() {
     echo ""
     
     # 构建前端
-    build_frontend || exit 1
+    build_frontend $FRONTEND_MAX_MEMORY || exit 1
     echo ""
     
     # 显示状态
