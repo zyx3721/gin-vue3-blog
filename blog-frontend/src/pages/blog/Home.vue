@@ -79,6 +79,11 @@
                     </span>
                     <n-divider vertical />
                     <span class="meta-item">
+                      <n-icon :component="CreateOutline" size="14" />
+                      {{ formatDate(post.updated_at, 'YYYY-MM-DD') }}
+                    </span>
+                    <n-divider vertical />
+                    <span class="meta-item">
                       <n-icon :component="EyeOutline" size="14" />
                       {{ post.view_count }}
                     </span>
@@ -142,7 +147,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useMessage } from 'naive-ui'
-import { TimeOutline, EyeOutline } from '@vicons/ionicons5'
+import { TimeOutline, EyeOutline, CreateOutline } from '@vicons/ionicons5'
 import { getPosts } from '@/api'
 import { formatDate } from '@/utils/format'
 import { highlightKeyword, extractHighlightSnippet } from '@/utils/highlight'
