@@ -308,6 +308,48 @@
       </n-form>
     </n-card>
 
+    <n-card title="打赏配置" style="margin-top: 24px;">
+      <n-form
+        :model="formData"
+        :label-placement="isMobile ? 'top' : 'left'"
+        :label-width="isMobile ? 'auto' : '120'"
+      >
+        <n-form-item label="微信收款码" path="reward_wechat">
+          <n-input
+            v-model:value="formData.reward_wechat"
+            placeholder="微信收款码图片URL"
+            maxlength="500"
+            clearable
+          >
+            <template #suffix>
+              <n-button text size="tiny" @click="clearField('reward_wechat')" type="error">清空</n-button>
+            </template>
+          </n-input>
+        </n-form-item>
+
+        <n-form-item label="支付宝收款码" path="reward_alipay">
+          <n-input
+            v-model:value="formData.reward_alipay"
+            placeholder="支付宝收款码图片URL"
+            maxlength="500"
+            clearable
+          >
+            <template #suffix>
+              <n-button text size="tiny" @click="clearField('reward_alipay')" type="error">清空</n-button>
+            </template>
+          </n-input>
+        </n-form-item>
+
+        <n-alert type="info" style="margin-bottom: 16px;">
+          上传收款码图片后将图片URL填入对应字段，保存后导航栏将出现打赏按钮。两个字段均为空时按钮自动隐藏。
+        </n-alert>
+
+        <n-form-item>
+          <n-button type="primary" @click="handleSubmit" :loading="loading">保存设置</n-button>
+        </n-form-item>
+      </n-form>
+    </n-card>
+
     <n-card title="设置说明" style="margin-top: 24px;">
       <n-space vertical>
         <p><strong>网站名称：</strong>显示在网站底部的名称</p>
@@ -357,7 +399,9 @@ const defaultFormData = {
   social_rss: '',
   social_csdn: '',
   social_qq: '',
-  social_wechat: ''
+  social_wechat: '',
+  reward_wechat: '',
+  reward_alipay: ''
 }
 
 const formData = ref({
@@ -370,7 +414,9 @@ const formData = ref({
   social_rss: '',
   social_csdn: '',
   social_qq: '',
-  social_wechat: ''
+  social_wechat: '',
+  reward_wechat: '',
+  reward_alipay: ''
 })
 
 const uploadFormData = ref({
@@ -518,7 +564,9 @@ async function fetchSettings() {
         social_rss: res.data.social_rss || '',
         social_csdn: res.data.social_csdn || '',
         social_qq: res.data.social_qq || '',
-        social_wechat: res.data.social_wechat || ''
+        social_wechat: res.data.social_wechat || '',
+        reward_wechat: res.data.reward_wechat || '',
+        reward_alipay: res.data.reward_alipay || ''
       }
       
       // 初始化社交链接排序
