@@ -34,6 +34,15 @@
                 <n-icon :component="MenuOutline" size="24" />
               </template>
             </n-button>
+            <!-- 打赏按钮 -->
+            <n-button
+              text
+              @click="showRewardModal = true"
+            >
+              <template #icon>
+                <n-icon :component="CafeOutline" size="20" />
+              </template>
+            </n-button>
             <!-- 搜索按钮 -->
             <n-button text @click="showSearchModal = true">
               <template #icon>
@@ -205,6 +214,36 @@
       </div>
     </n-modal>
 
+    <!-- 打赏对话框 -->
+    <n-modal
+      v-model:show="showRewardModal"
+      preset="card"
+      title="请作者喝杯咖啡 ☕"
+      style="width: 420px; max-width: 90vw"
+      :bordered="false"
+      :segmented="false"
+      @mask-click="showRewardModal = false"
+    >
+      <div class="reward-modal-content">
+        <template v-if="siteSettings.reward_wechat || siteSettings.reward_alipay">
+          <div class="reward-qrcodes">
+            <div v-if="siteSettings.reward_wechat" class="reward-item">
+              <img :src="siteSettings.reward_wechat" alt="微信收款码" class="reward-qrcode" />
+              <p class="reward-label">微信</p>
+            </div>
+            <div v-if="siteSettings.reward_alipay" class="reward-item">
+              <img :src="siteSettings.reward_alipay" alt="支付宝收款码" class="reward-qrcode" />
+              <p class="reward-label">支付宝</p>
+            </div>
+          </div>
+          <p class="reward-tip">感谢您的支持与鼓励！</p>
+        </template>
+        <template v-else>
+          <n-empty description="暂未开放打赏功能" style="padding: 32px 0;" />
+        </template>
+      </div>
+    </n-modal>
+
     <!-- 修改密码对话框 -->
     <n-modal
       v-model:show="showPasswordModal"
@@ -258,7 +297,7 @@
 <script setup lang="ts">
 import { ref, computed, h, onMounted, onBeforeUnmount, reactive, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { MoonOutline, SunnyOutline, PersonOutline, LogOutOutline, SettingsOutline, SearchOutline, MenuOutline, HomeOutline, ArchiveOutline, ChatbubblesOutline, ChatboxEllipsesOutline, LinkOutline, InformationCircleOutline } from '@vicons/ionicons5'
+import { MoonOutline, SunnyOutline, PersonOutline, LogOutOutline, SettingsOutline, SearchOutline, MenuOutline, HomeOutline, ArchiveOutline, ChatbubblesOutline, ChatboxEllipsesOutline, LinkOutline, InformationCircleOutline, CafeOutline } from '@vicons/ionicons5'
 import { useAuthStore, useAppStore } from '@/stores'
 import { NIcon, useMessage, useDialog } from 'naive-ui'
 import type { FormInst, FormRules } from 'naive-ui'
@@ -291,6 +330,7 @@ let lastScrollTop = 0
 const searchKeyword = ref('')
 const showSearchModal = ref(false)
 const showMobileMenu = ref(false)
+const showRewardModal = ref(false)
 const searchResults = ref<Post[]>([])
 const searchLoading = ref(false)
 let searchTimer: number | null = null
@@ -1313,6 +1353,55 @@ html.dark .user-role {
 
 .mobile-login {
   padding: 16px 0;
+}
+
+/* 打赏模态框样式 */
+.reward-modal-content {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.reward-qrcodes {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.reward-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.reward-qrcode {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid rgba(8, 145, 178, 0.15);
+}
+
+.reward-label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0891b2;
+}
+
+html.dark .reward-label {
+  color: #38bdf8;
+}
+
+.reward-tip {
+  margin: 20px 0 4px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+html.dark .reward-tip {
+  color: #94a3b8;
 }
 
 /* 小屏幕优化 */
