@@ -368,7 +368,7 @@ email:
 
 ## 4.1 快速部署脚本
 
-项目提供了自动化部署管理脚本 `deploy.sh`，支持以下操作：
+项目提供了自动化部署管理脚本 `management.sh`，支持以下操作：
 
 | 命令 | 功能说明 |
 |------|----------|
@@ -384,16 +384,16 @@ email:
 cd /web/gin-vue3-blog
 
 # 2. 添加执行权限（首次使用）
-chmod +x deploy.sh
+chmod +x management.sh
 
 # 3. 查看帮助
-./deploy.sh
+./management.sh
 
 # 4. 执行相应命令
-./deploy.sh build    # 完整构建并部署
-./deploy.sh start    # 启动服务
-./deploy.sh stop     # 停止服务
-./deploy.sh status   # 查看状态
+./management.sh build    # 完整构建并部署
+./management.sh start    # 启动服务
+./management.sh stop     # 停止服务
+./management.sh status   # 查看状态
 ```
 
 > **注意**：使用脚本前请确保：
@@ -710,6 +710,7 @@ cp blog-backend/config/config.yml deploy/backend-config/
 cp blog-backend/config/config-prod.yml deploy/backend-config/
 
 # 创建敏感环境变量文件
+mkdir deploy/backend-env
 cp blog-backend/config/env.config.example deploy/backend-env/.env.config.prod
 vim deploy/backend-env/.env.config.prod
 ```
@@ -735,7 +736,7 @@ JWT_SECRET=your_jwt_secret
 
 #### 4.2.2.2 构建镜像
 
-如已有推送到镜像仓库（如阿里云 ACR）的镜像，可直接 `docker pull` 使用；否则在本地手动构建：
+如果不想使用阿里云镜像仓库的镜像，可直接在本地手动构建（默认使用阿里云镜像仓库地址）：
 
 ```bash
 # 在 deploy/ 目录下构建（构建上下文为项目根目录）
