@@ -51,7 +51,7 @@ RUN go build -o /out/blog-backend ./cmd/server
 ############################
 # 3) gitee-calendar-api builder
 ############################
-FROM golang:1.22-bookworm AS gitee-builder
+FROM golang:1.25-bookworm AS gitee-builder
 
 WORKDIR /src
 
