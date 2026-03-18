@@ -50,7 +50,7 @@ services:
       - "6379:6379"
 
   blog:
-    image: gin-vue3-blog:prod
+    image: registry.cn-hangzhou.aliyuncs.com/wylhub/gin-vue3-blog:prod
     container_name: gin-vue3-blog
     restart: unless-stopped
     # ----------------------------------------------------------------
