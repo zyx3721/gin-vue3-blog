@@ -24,6 +24,7 @@ blog-backend/main
 blog-backend/server
 blog-backend/cmd/server/blog-backend
 blog-backend/blog-backend.exe
+blog-backend/blog-backend
 
 # Test binary, built with `go test -c`  通过 `go test -c` 生成的测试二进制文件
 *.test
