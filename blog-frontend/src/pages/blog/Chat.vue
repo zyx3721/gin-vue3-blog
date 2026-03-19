@@ -9,7 +9,7 @@
  -->
 <template>
   <div class="chat-page">
-    <n-card title="聊天室" class="chat-container">
+    <n-card title="聊天室" class="chat-container" :theme-overrides="cardThemeOverrides">
       <template #header-extra>
         <n-space align="center">
           <n-badge :value="onlineCount" :max="99" type="success">
@@ -226,6 +226,7 @@ import {
   useMessage,
   useDialog
 } from 'naive-ui'
+import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
 import { createChatWebSocket, ChatWebSocket } from '@/utils/websocket'
 import { adminDeleteMessage, adminKickUser, type ChatMessage, type OnlineUser } from '@/api/chat'
@@ -233,8 +234,21 @@ import { formatDistanceToNow } from '@/utils/format'
 import request from '@/utils/request'
 
 const authStore = useAuthStore()
+const appStore = useAppStore()
 const message = useMessage()
 const dialog = useDialog()
+
+// 卡片暗色主题覆盖
+const cardThemeOverrides = computed(() => {
+  if (appStore.theme !== 'dark') return {}
+  return {
+    color: '#1a2332',
+    colorEmbedded: '#1a2332',
+    borderColor: '#243447',
+    titleTextColor: '#e2e8f0',
+    textColor: '#e5e7eb',
+  }
+})
 
 // WebSocket连接
 let ws: ChatWebSocket | null = null
@@ -361,23 +375,14 @@ const getAvatarColor = (username: string) => {
 
 // 判断是否是自己的消息
 const isOwnMessage = (msg: ChatMessage) => {
-  // 如果用户已登录，同时比较 user_id 和 username
+  // 已登录用户只用 user_id 比较，避免同名用户误判
   if (authStore.isLoggedIn && authStore.user?.id) {
-    // 先比较 user_id（登录用户的消息）
-    if (msg.user_id !== null && msg.user_id !== undefined && Number(msg.user_id) === Number(authStore.user.id)) {
-      return true
-    }
-    // 再比较 username（可能是同一个用户在另一个设备上匿名发的）
-    if (authStore.user.username && msg.username === authStore.user.username) {
-      return true
-    }
+    return msg.user_id !== null && msg.user_id !== undefined && Number(msg.user_id) === Number(authStore.user.id)
   }
-  
-  // 如果是匿名用户，只比较用户名
+  // 匿名用户比较用户名
   if (userSetup.value.username) {
     return msg.username === userSetup.value.username
   }
-  
   return false
 }
 
@@ -621,23 +626,45 @@ onUnmounted(() => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-  height: calc(100vh - 40px);
+  /* 使用 DefaultLayout 注入的 CSS 变量，自动响应 header 显隐 */
+  height: calc(100vh - var(--header-height, 72px) - 32px);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .chat-container {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
+}
+
+/* 穿透 Naive UI n-card 所有内部包裹层，强制 flex 高度链 */
+.chat-container :deep(.n-card) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 .chat-container :deep(.n-card__content) {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 180px);
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
+  padding: 0 !important;
+}
+
+/* n-card__content 内部可能还有 .n-scrollbar 包裹层 */
+.chat-container :deep(.n-card__content > .n-scrollbar),
+.chat-container :deep(.n-card__content > .n-scrollbar > .n-scrollbar-container),
+.chat-container :deep(.n-card__content > .n-scrollbar > .n-scrollbar-container > .n-scrollbar-content) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
 }
 
 .chat-layout {
@@ -650,11 +677,14 @@ onUnmounted(() => {
 .chat-messages {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px;
-  background: #f5f5f5;
+  background: #f8f9fa;
   border-radius: 8px;
   margin-bottom: 16px;
   min-height: 0;
+  /* header(72px) + main-padding(32px) + card-header(55px) + card-padding(48px) + chat-input(130px) + margin(16px) + chat-page-padding(40px) */
+  max-height: calc(100vh - var(--header-height, 72px) - 32px - 289px);
 }
 
 .empty-messages {
@@ -668,16 +698,24 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* 重置 global.css 的 max-width:100% 对 flex 容器的干扰 */
+  max-width: none;
+  width: 100%;
 }
 
 .message-item {
   display: flex;
   gap: 12px;
   animation: fadeIn 0.3s ease-in;
+  /* 防止 global.css max-width 压缩 flex 子项布局 */
+  max-width: none;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .message-item.own-message {
   flex-direction: row-reverse;
+  padding-right: 0;
 }
 
 .message-item.own-message .message-content {
@@ -691,6 +729,18 @@ onUnmounted(() => {
 
 .message-avatar {
   flex-shrink: 0;
+  max-width: none;
+}
+
+.message-avatar :deep(.n-avatar) {
+  max-width: none;
+}
+
+.message-avatar :deep(.n-avatar img),
+.message-avatar :deep(.n-avatar svg) {
+  max-width: none;
+  width: 100%;
+  height: 100%;
 }
 
 .message-content {
@@ -698,6 +748,7 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 4px;
   max-width: 70%;
+  min-width: 0; /* 防止 flex 子项撑破父容器 */
 }
 
 .message-header {
@@ -731,6 +782,9 @@ onUnmounted(() => {
   border-radius: 8px;
   border: 1px solid #e0e0e0;
   flex-shrink: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .input-wrapper {
@@ -786,17 +840,40 @@ html.dark .chat-page {
 }
 
 html.dark .chat-container {
-  background-color: #0f172a;
-  border-color: #1f2937;
+  border-color: #243447;
+}
+
+html.dark .chat-container :deep(.n-card) {
+  background-color: #1a2332 !important;
+  border-color: #243447 !important;
+  --n-border-color: #243447 !important;
+  --n-color: #1a2332 !important;
+}
+
+html.dark .chat-container :deep(.n-card-header) {
+  background-color: #1a2332 !important;
+  border-bottom-color: #243447 !important;
+  --n-border-color: #243447 !important;
+}
+
+html.dark .chat-container :deep(.n-card-header__main) {
+  color: #e2e8f0;
 }
 
 html.dark .chat-container :deep(.n-card__content) {
-  background-color: transparent;
+  background-color: #1a2332 !important;
+  padding: 0 !important;
+}
+
+/* 消除卡片底部白色 padding */
+html.dark .chat-container :deep(.n-card__footer) {
+  background-color: #1a2332 !important;
+  border-top-color: #243447;
 }
 
 html.dark .chat-messages {
-  background: #0b1220;
-  border: 1px solid #1f2937;
+  background: #0f172a;
+  border: 1px solid #1e2d3d;
 }
 
 html.dark .message-username {
@@ -808,7 +885,7 @@ html.dark .message-time {
 }
 
 html.dark .message-text {
-  background: #1f2937;
+  background: #1a2332;
   color: #e5e7eb;
   box-shadow: none;
   border: 1px solid #243447;
@@ -821,8 +898,10 @@ html.dark .message-item.own-message .message-text {
 }
 
 html.dark .chat-input {
-  background: #0b1220;
-  border-color: #1f2937;
+  background: #1a2332;
+  border-color: #243447;
+  border: 1px solid #243447;
+  border-radius: 8px;
 }
 
 html.dark .emoji-btn {
@@ -838,20 +917,25 @@ html.dark .emoji-item:hover {
 }
 
 html.dark .chat-messages::-webkit-scrollbar-track {
-  background: #111827;
+  background: #111827 !important;
 }
 
 html.dark .chat-messages::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: #374151 !important;
 }
 
 html.dark .chat-messages::-webkit-scrollbar-thumb:hover {
-  background: #4b5563;
+  background: #4b5563 !important;
+}
+
+html.dark .input-wrapper :deep(.n-input) {
+  background-color: #0f172a;
+  border-color: #243447;
 }
 
 html.dark .input-wrapper :deep(.n-input__textarea-el) {
   color: #e5e7eb;
-  background: #0f172a;
+  background: transparent;
 }
 
 html.dark .input-wrapper :deep(.n-input__textarea-el::placeholder) {
@@ -869,23 +953,24 @@ html.dark .input-wrapper :deep(.n-input__textarea-el::placeholder) {
   }
 }
 
-/* 滚动条样式 */
+/* 滚动条样式（!important 覆盖 global.css 的 10px 全局设定） */
 .chat-messages::-webkit-scrollbar {
-  width: 6px;
+  width: 6px !important;
 }
 
 .chat-messages::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
+  background: #f1f1f1 !important;
+  border-radius: 3px !important;
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 3px;
+  background: #888 !important;
+  border-radius: 3px !important;
+  border: none !important;
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #555 !important;
 }
 
 /* ===== 移动端响应式适配 ===== */
@@ -893,15 +978,15 @@ html.dark .input-wrapper :deep(.n-input__textarea-el::placeholder) {
   .chat-page {
     padding: 0;
     max-width: 100%;
-    height: 100vh;
+    height: calc(100vh - var(--header-height, 60px));
   }
 
   .chat-container {
     border-radius: 0;
-    height: 100vh;
+    height: 100%;
   }
 
-  .chat-container :deep(.n-card) {
+  .chat-container {
     border-radius: 0;
   }
 

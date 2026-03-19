@@ -13,10 +13,6 @@
 *.iws
 out/
 
-
-# Emacs  Emacs 编辑器配置
-
-
 # ==================== Go Backend ====================  Go 后端相关配置
 # Binaries  编译生成的二进制文件
 *.exe
@@ -28,6 +24,7 @@ blog-backend/main
 blog-backend/server
 blog-backend/cmd/server/blog-backend
 blog-backend/blog-backend.exe
+blog-backend/blog-backend
 
 # Test binary, built with `go test -c`  通过 `go test -c` 生成的测试二进制文件
 *.test
@@ -100,11 +97,6 @@ blog-backend/uploads/avatars/*
 !blog-backend/uploads/avatars/.gitkeep
 
 # ==================== Database ====================  数据库相关
-# Database files  数据库文件
-*.db
-*.sqlite
-*.sqlite3
-
 # Database dumps  数据转储文件
 *.sql.gz
 *.sql.bak
@@ -116,8 +108,11 @@ blog-backend/sql/blogdb.sql
 blog-backend/sql/backup_*.sql
 
 # Docker volumes  Docker 数据卷目录
-postgres-data/
-redis-data/
+deploy/PgSqlData/
+deploy/redisData/
+deploy/uploads/
+deploy/backend-env/
+deploy/logs/
 
 # ==================== Docker ====================  Docker 相关配置
 # Docker override files  Docker 覆盖配置文件
@@ -137,5 +132,3 @@ dist/
 
 # JWT secrets  JWT 密钥等敏感配置
 secrets/
-
-

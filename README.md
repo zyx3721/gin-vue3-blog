@@ -368,7 +368,7 @@ email:
 
 ## 4.1 快速部署脚本
 
-项目提供了自动化部署管理脚本 `deploy.sh`，支持以下操作：
+项目提供了自动化部署管理脚本 `management.sh`，支持以下操作：
 
 | 命令 | 功能说明 |
 |------|----------|
@@ -384,16 +384,16 @@ email:
 cd /web/gin-vue3-blog
 
 # 2. 添加执行权限（首次使用）
-chmod +x deploy.sh
+chmod +x management.sh
 
 # 3. 查看帮助
-./deploy.sh
+./management.sh
 
 # 4. 执行相应命令
-./deploy.sh build    # 完整构建并部署
-./deploy.sh start    # 启动服务
-./deploy.sh stop     # 停止服务
-./deploy.sh status   # 查看状态
+./management.sh build    # 完整构建并部署
+./management.sh start    # 启动服务
+./management.sh stop     # 停止服务
+./management.sh status   # 查看状态
 ```
 
 > **注意**：使用脚本前请确保：
@@ -682,152 +682,120 @@ esac
 
 
 
-### 4.2.2 方式二：Docker Compose
+### 4.2.2 方式二：Docker Compose（推荐）
 
-使用 Docker Compose 一键部署后端服务（包含 PostgreSQL、Redis、后端应用）
+所有相关文件统一放在 `deploy/` 目录下，单镜像包含前端（Nginx）、后端（blog-backend）、Gitee 日历 API，通过 supervisord 管理多进程。
 
-#### 4.2.2.1 编译后端程序
-
-```bash
-cd blog-backend
-
-# Windows PowerShell
-$env:GOOS="linux"; $env:GOARCH="amd64"; go build -o blog-backend ./cmd/server
-
-# Linux/Mac
-GOOS=linux GOARCH=amd64 go build -o blog-backend ./cmd/server
+```
+deploy/
+├── Dockerfile              # 多阶段构建镜像
+├── docker-compose.yml      # 容器编排
+├── backend-config/         # 后端配置目录（挂载到容器）
+├── backend-env/
+│   └── .env.config.prod    # 敏感环境变量（不提交 Git）
+├── uploads/                # 上传文件持久化
+├── logs/                   # 日志持久化
+├── PgSqlData/              # PostgreSQL 数据持久化
+├── redisData/              # Redis 数据持久化
+└── docker/
+    ├── nginx/default.conf  # 容器内 Nginx 配置
+    └── supervisord.conf    # 进程管理配置
 ```
 
-#### 4.2.2.2 配置环境变量（推荐）
-
-> 生产环境同样推荐使用「YAML + .env.config.prod」方案，将敏感信息放到环境变量文件中，而不是写死在 `config-prod.yml` 里。
-
-- **创建生产环境配置文件**  
-
-  1. 创建 `config/config-prod.yml`（模板已提供，与 `config-dev.yml` 结构相同，主要区别是日志级别为 `info`）
-  2. 修改 `config/config.yml` 中的 `env: dev` 为 `env: prod`，系统会自动加载 `config-prod.yml`
-
-- **后端应用内部配置覆盖**  
-  在后端可执行文件的工作目录下创建 `.env.config.prod`，用于覆盖 `config/config-prod.yml` 中的敏感字段。  
-  **模板文件**：`blog-backend/config/env.config.example`（与 `.env.config.dev` 使用相同的配置项，但值不同）  
-  复制模板并填写生产环境实际值：
-
-  ```bash
-  cp config/env.config.example .env.config.prod
-  vim .env.config.prod
-  ```
-
-  示例配置：
-
-  ```bash
-  # 数据库
-  DB_HOST=postgres
-  DB_PORT=5432
-  DB_USER=postgres
-  DB_PASSWORD=your_postgres_password
-  DB_NAME=blogdb
-  
-  # Redis
-  REDIS_HOST=redis
-  REDIS_PORT=6379
-  REDIS_PASSWORD=your_redis_password
-  
-  # Gitee Calendar API
-  GITEE_CALENDAR_API_URL=http://127.0.0.1:8081/api
-  
-  # JWT
-  JWT_SECRET=your_jwt_secret
-  
-  # 阿里云 OSS（如使用）
-  OSS_ENDPOINT=oss-cn-hangzhou.aliyuncs.com
-  OSS_ACCESS_KEY_ID=your-ak
-  OSS_ACCESS_KEY_SECRET=your-sk
-  OSS_BUCKET_NAME=your-bucket
-  
-  # 腾讯云 COS（如使用）
-  COS_BUCKET_URL=https://your-bucket.cos.ap-guangzhou.myqcloud.com
-  COS_SECRET_ID=your-cos-secret-id
-  COS_SECRET_KEY=your-cos-secret-key
-  ```
-
-- **环境变量字段说明（生产建议放在 `.env.config.prod`，模板：`blog-backend/config/env.config.example`）**
-
-  - 基础必填：`DB_HOST` `DB_PORT` `DB_USER` `DB_PASSWORD` `DB_NAME`  
-  - Redis：`REDIS_HOST` `REDIS_PORT` `REDIS_PASSWORD`  
-  - JWT：`JWT_SECRET`（可选 `JWT_EXPIRE_HOURS`）  
-  - 邮件（找回密码/验证邮件）：`EMAIL_HOST` `EMAIL_PORT` `EMAIL_USERNAME` `EMAIL_PASSWORD`（`EMAIL_FROM_NAME` 如需覆盖）  
-  - Gitee 贡献热力图：`GITEE_CALENDAR_API_URL`（必填，后端调用 gitee-calendar-api）  
-  - 对象存储可选：阿里云 OSS（`OSS_ENDPOINT` `OSS_ACCESS_KEY_ID` `OSS_ACCESS_KEY_SECRET` `OSS_BUCKET_NAME` `OSS_DOMAIN`），腾讯云 COS（`COS_BUCKET_URL` `COS_SECRET_ID` `COS_SECRET_KEY` `COS_DOMAIN`）  
-  - 其他按需：如有自定义新增字段，统一放入 `.env.config.prod` 并在后端读取。
-
-- **数据库 / Redis 容器自身变量**  
-  你仍然可以在 `docker-compose.yml` 同级的 `.env` 文件中，为 PostgreSQL / Redis 设置自身的密码等变量，例如：
+#### 4.2.2.1 准备配置文件
 
 ```bash
-# PostgreSQL 容器内部初始化密码
-POSTGRES_PASSWORD=your_postgres_password
-POSTGRES_DB=blogdb
+# 复制后端配置到挂载目录
+cp blog-backend/config/config.yml deploy/backend-config/
+cp blog-backend/config/config-prod.yml deploy/backend-config/
 
-# Redis 容器内部初始化密码
+# 创建敏感环境变量文件
+mkdir deploy/backend-env
+cp blog-backend/config/env.config.example deploy/backend-env/.env.config.prod
+vim deploy/backend-env/.env.config.prod
+```
+
+`.env.config.prod` 关键配置项：
+
+```bash
+# 数据库（使用新建容器时填 172.17.0.1，使用已有容器时填对应 IP）
+DB_HOST=172.17.0.1
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_postgres_password
+DB_NAME=blogdb
+
+# Redis
+REDIS_HOST=172.17.0.1
+REDIS_PORT=6379
 REDIS_PASSWORD=your_redis_password
+
+# JWT
+JWT_SECRET=your_jwt_secret
 ```
 
-  或者直接在 `docker-compose.yml` 文件中内联这些环境变量。
+#### 4.2.2.2 构建镜像
 
-#### 4.2.2.3 启动所有服务
+如果不想使用阿里云镜像仓库的镜像，可直接在本地手动构建（默认使用阿里云镜像仓库地址）：
 
 ```bash
-# 构建并启动所有服务
-docker compose up -d --build
+# 在 deploy/ 目录下构建（构建上下文为项目根目录）
+cd deploy
+docker build -t gin-vue3-blog:prod -f Dockerfile ..
+```
 
+#### 4.2.2.3 启动服务
+
+`docker-compose.yml` 支持两种模式，按需选择：
+
+**模式一：新建 PostgreSQL + Redis 容器（默认）**
+
+首次启动会自动创建 `blogdb` 数据库并导入 `blog-backend/sql/init.sql` 初始数据。
+
+```bash
+cd deploy
+docker compose up -d
+```
+
+**模式二：使用已有容器**
+
+编辑 `deploy/docker-compose.yml`：
+1. 注释掉 `postgres` 和 `redis` 服务块
+2. 注释掉 `blog.depends_on` 块
+3. 取消注释 `blog.environment` 中的 `DB_HOST` / `REDIS_HOST` 并填入已有容器地址
+
+```bash
+cd deploy
+docker compose up -d
+```
+
+#### 4.2.2.4 服务管理
+
+```bash
 # 查看服务状态
 docker compose ps
 
 # 查看日志
-docker compose logs -f backend
-```
+docker compose logs -f blog
 
-#### 4.2.2.4 初始化数据库
+# 重启 blog 服务
+docker compose restart blog
 
-```bash
-# 进入数据库容器
-docker exec -it pg-prod psql -U postgres
-
-# 创建数据库
-CREATE DATABASE blogdb
-  WITH OWNER = postgres
-       ENCODING = 'UTF8'
-       LC_COLLATE = 'en_US.utf8'
-       LC_CTYPE   = 'en_US.utf8'
-       TEMPLATE   = template0;
-
-# 开始外部导入 SQL
-docker exec -i pg-prod psql -U postgres -d blogdb < sql/init.sql
-# 如果是导入备份数据则如下：
-docker cp blog_backup.dump pg-prod:/tmp
-docker exec -it pg-prod pg_restore -U postgres -d blogdb --clean --if-exists /tmp/blog_backup.dump
-```
-
-#### 4.2.2.5 服务管理
-
-```bash
 # 停止所有服务
 docker compose down
 
-# 停止并删除数据卷（谨慎使用！）
+# 停止并删除数据卷（谨慎！数据会丢失）
 docker compose down -v
-
-# 重启服务
-docker compose restart backend
-
-# 查看日志
-docker compose logs -f backend
 ```
+
+#### 4.2.2.5 宿主机 Nginx 反代（可选）
+
+如需通过宿主机 Nginx 配置 HTTPS，将 `docker-compose.yml` 中端口改为 `8080:80`，然后参考 `nginx-config/go-blog-prod-docker.conf` 配置宿主机 Nginx。
 
 **服务访问地址：**
 
-- **后端 API（默认）**: `http://localhost:8080`
-- **PostgreSQL**: `localhost:5632`
+- **博客前台**: `http://localhost:80`（或宿主机 Nginx 反代后的域名）
+- **PostgreSQL**: `localhost:5432`
 - **Redis**: `localhost:6379`
 
 ## 4.3 前端构建与配置
