@@ -803,6 +803,13 @@ async function handlePasswordSubmit() {
   right: 0;
   bottom: 0;
   overflow: hidden;
+  --header-height: 72px;
+}
+
+@media (max-width: 768px) {
+  .default-layout {
+    --header-height: 60px;
+  }
 }
 
 .default-layout :deep(.n-layout) {
