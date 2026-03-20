@@ -64,7 +64,7 @@
 创建 `pgsql` 指令：
 
 ```bash
-docker run -d --name psql \
+docker run -d --name pg-prod \
   -p 5432:5432 \
   -v /data/PgSqlData:/var/lib/postgresql/data \
   -e POSTGRES_PASSWORD="123456ok!" \
@@ -76,7 +76,7 @@ docker run -d --name psql \
 创建`redis`指令:
 
 ```bash
-docker run -d --name redis \
+docker run -d --name redis-prod \
   -p 6379:6379 \
   --restart=always \
   -v /data/redisData:/data \
@@ -98,8 +98,8 @@ CONTAINER ID   IMAGE                COMMAND                  CREATED          ST
 ## 3.2 克隆项目
 
 ```bash
-git clone https://github.com/WuYiLingOps/gin-vue3-blog.git myBlog
-cd myBlog
+git clone https://github.com/WuYiLingOps/gin-vue3-blog.git
+cd gin-vue3-blog
 ```
 
 ## 3.3 数据库配置
@@ -129,7 +129,7 @@ psql -U postgres -d blogdb -f blog-backend/sql/init.sql
 进入容器内的 psql 交互界面：
 
 ```bash
-docker exec -it psql psql -U postgres
+docker exec -it pg-prod psql -U postgres
 ```
 
 在 psql 中创建 blogdb 库（执行后输入 `\q` 退出）：
@@ -368,18 +368,19 @@ email:
 
 ```bash
 deploy/
-├── Dockerfile              # 多阶段构建镜像
-├── docker-compose.yml      # 容器编排
-├── backend-config/         # 后端配置目录（挂载到容器）
+├── Dockerfile                     # 多阶段构建镜像
+├── docker-compose.yml             # 容器编排
+├── backend-config/                # 后端配置目录（挂载到容器）
 ├── backend-env/
-│   └── .env.config.prod    # 敏感环境变量（不提交 Git）
-├── uploads/                # 上传文件持久化
-├── logs/                   # 日志持久化
-├── PgSqlData/              # PostgreSQL 数据持久化
-├── redisData/              # Redis 数据持久化
+│   └── .env.config.prod           # 敏感环境变量（不提交 Git）
+│   └── .env-gitee-calendar-api    # gitee api 访问白名单 (可选)（不提交 Git）
+├── uploads/                       # 上传文件持久化
+├── logs/                          # 日志持久化
+├── PgSqlData/                     # PostgreSQL 数据持久化
+├── redisData/                     # Redis 数据持久化
 └── docker/
-    ├── nginx/default.conf  # 容器内 Nginx 配置
-    └── supervisord.conf    # 进程管理配置
+    ├── nginx/default.conf         # 容器内 Nginx 配置
+    └── supervisord.conf           # 进程管理配置
 ```
 
 ## 4.1 准备配置文件
@@ -391,8 +392,12 @@ cp blog-backend/config/config-prod.yml deploy/backend-config/
 
 # 创建敏感环境变量文件
 mkdir deploy/backend-env
-cp blog-backend/config/env.config.example deploy/backend-env/.env.config.prod
+cp blog-backend/config/env.config.example deploy/backend-env/.env.config.prod # 必选
+touch blog-backend/config/.env-gitee-calendar-api	# 可选
+
+# 添加配置
 vim deploy/backend-env/.env.config.prod
+vim deploy/backend-env/.env-gitee-calendar-api      # 可选
 ```
 
 `.env.config.prod` 关键配置项：
@@ -412,9 +417,36 @@ REDIS_PASSWORD=your_redis_password
 
 # JWT
 JWT_SECRET=your_jwt_secret
+
+# 邮箱 （可选）
+......
+
+# 对象存储(腾讯、阿里)(可选)
+.....
 ```
 
-## 4.2 构建镜像
+`.env-gitee-calendar-api`参考配置如下：
+
+```bash
+# Gitee Calendar API IP 白名单配置文件
+# 文件名: .env-gitee-calendar-api
+# 位置: 项目根目录（与 api-go 目录同级）
+#
+# 配置说明：
+# - 每行一个 IP 地址或 CIDR 网段
+# - 支持 IPv4 和 IPv6
+# - 支持 CIDR 格式（如 192.168.1.0/24）
+# - 以 # 开头的行为注释，会被忽略
+# - 空行会被忽略
+#
+# 如果此文件不存在，默认允许所有 IP 访问
+# 如果此文件存在，只有白名单中的 IP 可以访问 API
+
+# 填写你自己的公网服务器ip
+10.xx.xx.xx
+```
+
+## 4.2 构建镜像（可选）
 
 如果不想使用阿里云镜像仓库的镜像，可直接在本地手动构建（默认使用阿里云镜像仓库地址）：
 
@@ -519,7 +551,7 @@ chmod +x management.sh
 > - Go 环境已配置
 > - pnpm 已安装
 > - 项目配置文件已正确设置（`.env.config.prod` 等）
-> - Nginx 反向代理已配置完成（参考 [4.4 Nginx反向代理](#44-nginx反向代理)）
+> - Nginx 反向代理已配置完成（参考 [5.4 Nginx反向代理](#5.4-nginx反向代理)）
 
 ## 5.2 后端配置及部署
 
@@ -684,128 +716,6 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
-```
-
-### 5.2.1.4 服务启动脚本参考（可选）
-
-> 后端服务启动脚本：
-
-```bash
-#!/bin/bash
-
-BASE_DIR="/data/myBlog/blog-backend"
-SERVER_NAME="blog-backend"
-PID_FILE="$BASE_DIR/app.pid"
-PID=$(cat "$PID_FILE" 2>/dev/null)
-
-case $1 in
-"start")
-    if [ -z "$PID" ]; then
-        echo "正在启动 blog-backend..."
-
-        cd $BASE_DIR
-        nohup ./blog-backend > app.log 2>&1 &
-        if [ $? -eq 0 ]; then
-            echo $! > $PID_FILE
-            echo -e '\033[32mblog-backend 服务启动成功！\033[0m'
-        else
-            echo -e '\033[31mblog-backend 服务启动失败！\033[0m'
-        fi
-    else
-        echo -e "\033[33mblog-backend 服务已运行 (PID: $PID) ！\033[0m"
-    fi
-;;
-"stop")
-    if [ -n "$PID" ]; then
-        echo "正在停止 blog-backend..."
-        kill -9 $PID &>/dev/null
-        if [ $? -eq 0 ];then
-            echo -n > $PID_FILE
-            echo -e '\033[32mblog-backend 服务停止成功！\033[0m'
-        else
-            echo -e '\033[31mblog-backend 服务停止失败！\033[0m'
-        fi
-    else
-        echo -e "\033[33mblog-backend 服务未运行！\033[0m"
-    fi
-;;
-"restart")
-    echo "正在重启 blog-backend..."
-    if [ -n "$PID" ]; then
-        kill -9 $PID &>/dev/null
-        sleep 3
-    fi
-
-    cd $BASE_DIR
-    nohup ./blog-backend > app.log 2>&1 &
-    if [ $? -eq 0 ]; then
-        echo $! > $PID_FILE
-        echo -e '\033[32mblog-backend 服务重启成功！\033[0m'
-    else
-        echo -e '\033[31mblog-backend 服务重启失败！\033[0m'
-    fi
-;;
-*)
-    echo "请输入参数：start | stop | restart"
-;;
-esac
-```
-
-> gitee api 启动脚本：
-
-```bash
-#!/bin/bash
-
-BASE_DIR="/data/myBlog"
-SERVER_NAME="gitee-calendar-api"
-PID=$(pgrep -f $SERVER_NAME)
-
-case $1 in
-"start")
-    if [ -z "$PID" ]; then
-        echo "正在启动 gitee-calendar-api..."
-
-        nohup $BASE_DIR/gitee-calendar-api > $BASE_DIR/gitee-calendar-api.log > /dev/null 2>&1 &
-        if [ $? -eq 0 ]; then
-            echo -e '\033[32mgitee-calendar-api 服务启动成功！\033[0m'
-        else
-            echo -e '\033[31mgitee-calendar-api 服务启动失败！\033[0m'
-        fi
-    else
-        echo -e "\033[33mgitee-calendar-api 服务已运行 (PID: $PID) ！\033[0m"
-    fi
-;;
-"stop")
-    if [ -n "$PID" ]; then
-        echo "正在停止 gitee-calendar-api..."
-        kill -9 $PID &>/dev/null
-        if [ $? -eq 0 ];then
-            echo -e '\033[32mgitee-calendar-api 服务停止成功！\033[0m'
-        else
-            echo -e '\033[31mgitee-calendar-api 服务停止失败！\033[0m'
-        fi
-    else
-        echo -e "\033[33mgitee-calendar-api 服务未运行！\033[0m"
-    fi
-;;
-"restart")
-    echo "正在重启 gitee-calendar-api..."
-    if [ -n "$PID" ]; then
-        kill -9 $PID &>/dev/null
-        sleep 3
-    fi
-
-    nohup $BASE_DIR/gitee-calendar-api > $BASE_DIR/gitee-calendar-api.log > /dev/null 2>&1 &
-    if [ $? -eq 0 ]; then
-        echo -e '\033[32mgitee-calendar-api 服务重启成功！\033[0m'
-    else
-        echo -e '\033[31mgitee-calendar-api 服务重启失败！\033[0m'
-    fi
-;;
-*)
-    echo "请输入参数：start | stop | restart"
-;;
-esac
 ```
 
 ## 5.3 前端构建与配置
