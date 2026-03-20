@@ -26,7 +26,7 @@ export function getCaptcha() {
  * @param data.email 用户邮箱地址
  * @returns 返回发送结果
  */
-export function sendRegisterCode(data: { email: string }) {
+export function sendRegisterCode(data: { email: string; username: string }) {
   return request.post('/auth/send-register-code', data)
 }
 
