@@ -13,11 +13,13 @@
 
 # 一、在线演示
 
-**网站地址**: [https://huangjingblog.cn/](https://huangjingblog.cn/)
+**网站地址**：[https://huangjingblog.cn/](https://huangjingblog.cn/)
 
 - 支持 PC、平板、手机访问
 - 可以访问聊天室与其他用户实时交流
 - 支持匿名访问或注册登录
+
+
 
 # 二、项目截图
 
@@ -54,30 +56,33 @@
 - **Node.js** >= 18.0.0
 - **Go** >= 1.21
 - **PostgreSQL** >= 15
-- **Redis** >= 3.0 (建议 >= 6.2 以避免客户端警告)
-- **pnpm** (推荐) 或 npm
+- **Redis** >= 3.0（建议 >= 6.2 以避免客户端警告）
+- **pnpm**（推荐）或 npm
 
-> 如果本地没有安装部署PostgreSQL\Redis,可参考以下docker快速部署相关数据库（可选）
+> 如果本地没有安装部署 PostgreSQL /Redis，可参考以下docker快速部署相关数据库（可选）。
 
-创建`pgsql`指令：
+创建 `pgsql` 指令：
 
 ```bash
-docker run --name pg-prod \
-  -e POSTGRES_PASSWORD="123456ok!" \
-  -v /data/PgSqlData:/var/lib/postgresql/data \
+docker run -d --name psql \
   -p 5432:5432 \
-  -d postgres:17-alpine
+  -v /data/PgSqlData:/var/lib/postgresql/data \
+  -e POSTGRES_PASSWORD="123456ok!" \
+  -e LANG=C.UTF-8 \
+  -e TZ=Asia/Shanghai \
+  postgres:17-alpine
 ```
 
 创建`redis`指令:
 
 ```bash
-docker run --name redis-prod \
+docker run -d --name redis \
   -p 6379:6379 \
+  --restart=always \
   -v /data/redisData:/data \
   -e REDIS_PASSWORD=123456 \
-  --restart=always \
-  -d redis:7-alpine \
+  -e TZ=Asia/Shanghai \
+  redis:7-alpine \
   redis-server --requirepass 123456 --appendonly yes
 ```
 
@@ -93,72 +98,69 @@ CONTAINER ID   IMAGE                COMMAND                  CREATED          ST
 ## 3.2 克隆项目
 
 ```bash
-git clone https://github.com/WuYiLingOps/gin-vue3-blog.git
+git clone https://github.com/WuYiLingOps/gin-vue3-blog.git myBlog
 cd myBlog
 ```
-
-
 
 ## 3.3 数据库配置
 
 ### 3.3.1 本地数据库导入
 
-创建 PostgreSQL 数据库(指定编码/排序，便于跨版本迁移一致)
+创建 PostgreSQL 数据库（指定编码/排序，便于跨版本迁移一致）：
 
 ```bash
-CREATE DATABASE blogdb
-  WITH OWNER = postgres
-       ENCODING = 'UTF8'
-       LC_COLLATE = 'en_US.utf8'
-       LC_CTYPE   = 'en_US.utf8'
-       TEMPLATE   = template0;
+psql -Upostgres -c " \
+  CREATE DATABASE blogdb \
+  WITH OWNER = postgres \
+    ENCODING = 'UTF8' \
+    LC_COLLATE = 'en_US.UTF-8' \
+    LC_CTYPE = 'en_US.UTF-8' \
+    TEMPLATE = template0;“
 ```
 
-导入初始化数据:
+导入初始化数据：
 
 ```bash
-cd blog-backend/sql
-psql -U postgres -d blogdb -f init.sql
+psql -U postgres -d blogdb -f blog-backend/sql/init.sql
 ```
 
 ### 3.3.2 容器数据库导入
 
-进入容器内的 psql 交互界面
+进入容器内的 psql 交互界面：
 
 ```bash
-docker exec -it pg-prod psql -U postgres
+docker exec -it psql psql -U postgres
 ```
 
-在 psql 中创建 blogdb 库（执行后输入 \q 退出）
+在 psql 中创建 blogdb 库（执行后输入 `\q` 退出）：
 
 ```bash
 CREATE DATABASE blogdb
-  WITH OWNER = postgres
-       ENCODING = 'UTF8'
-       LC_COLLATE = 'en_US.utf8'
-       LC_CTYPE   = 'en_US.utf8'
-       TEMPLATE   = template0;
+WITH OWNER = postgres
+  ENCODING = 'UTF8'
+  LC_COLLATE = 'en_US.UTF-8'
+  LC_CTYPE   = 'en_US.UTF-8'
+  TEMPLATE   = template0;
 ```
 
-开始导入数据
+开始导入数据：
 
 ```bash
 # 将 init.sql 传入容器
-docker cp gin-vue3-blog/blog-backend/sql/init.sql pg-prod:/tmp/init.sql
+docker cp blog-backend/sql/init.sql pg-prod:/tmp/init.sql
 
 # 导入数据
 docker exec -it pg-prod psql -U postgres -d blogdb -f /tmp/init.sql
 ```
 
-导入完成
+导入完成。
 
 ___
 
 
+> **注意**：新安装的数据库已包含 slug 字段，无需运行此脚本。只有从旧版本升级时才需要运行（可选）。
 
-> 注意：新安装的数据库已包含slug字段，无需运行此脚本。只有从旧版本升级时才需要运行。(可选)
-
-**为现有文章生成slug**（如果是从旧版本升级）
+为现有文章生成slug（如果是从旧版本升级）：
 
 ```bash
 cd blog-backend
@@ -167,16 +169,16 @@ go run cmd/migrate-slug/main.gos
 
 ## 3.4 后端配置与启动
 
-> 如果没有配置go的镜像代理，可以参考[Go 国内加速：Go 国内加速镜像 | Go 技术论坛](https://learnku.com/go/wikis/38122)
+> 如果没有配置go的镜像代理，可以参考 [Go 国内加速：Go 国内加速镜像 | Go 技术论坛](https://learnku.com/go/wikis/38122)。
 
-1. 进入后端目录下载相关依赖
+1. 进入后端目录下载相关依赖：
 
 ```bash
 cd blog-backend
 go mod download
 ```
 
-2. 配置数据库连接和邮箱服务
+2. 配置数据库连接和邮箱服务：
 
 ```bash
 # 推荐方案：YAML + .env.config.dev 组合
@@ -212,30 +214,31 @@ vim .env.config.dev
 #   from_name: 菱风叙
 ```
 
-3. 配置 Gitee 贡献热力图 API
+3. 配置 Gitee 贡献热力图 API：
 
-> 方式1: 配置 API 地址（填写到 config/config-dev.yml 中）
+> 方式1：配置 API 地址（填写到 `config/config-dev.yml` 中）
 
 ```bash
 # gitee_calendar:
 #   api_url: "http://localhost:8081/api"  # gitee-calendar-api 服务地址
 ```
 
-> 方式2: 配置在.env.config.dev当中
+> 方式2：配置在 `.env.config.dev` 当中
 
 ```bash
-# 在.env.config.dev根据自己的情况选择相应配置
+# 在 .env.config.dev 中根据自己的情况选择相应配置
 GITEE_CALENDAR_API_URL=http://127.0.0.1:8081/api
 ```
 
-> **使用贡献热力图前需在登录管理员后台中，填写 Gitee 链接并保存，否则无法自动获取用户名来请求热力图 **  
+> **注意：**使用贡献热力图前需在登录管理员后台中，填写 Gitee 链接并保存，否则无法自动获取用户名来请求热力图
+>
 > 例如：`https://gitee.com/WuYiLingOps`
 
-4. 启动 gitee-calendar-api 服务（默认端口 8081，接口路径 /api）
+4. 启动 gitee-calendar-api 服务（默认端口 `8081`，接口路径 `/api` ）：
 
-> 如需修改默认端口等相关操作,需要重新编译
+> 如需修改默认端口等相关操作，需要重新编译。
 >
-> gitee api项目地址:https://gitee.com/WuYiLingOps/go-code-calendar-api
+> gitee api 项目地址：https://gitee.com/WuYiLingOps/go-code-calendar-api
 
 ```bash
 # 方式1：前台运行（终端关闭则服务停止）
@@ -245,17 +248,17 @@ GITEE_CALENDAR_API_URL=http://127.0.0.1:8081/api
 nohup ./gitee-calendar-api > gitee-calendar-api.log 2>&1 &
 ```
 
-5. 运行后端服务
+5. 运行后端服务：
 
 ```bash
 go run cmd/server/main.go
 ```
 
-后端服务默认运行在 `http://localhost:8080`
+后端服务默认运行在 `http://localhost:8080` 。
 
 ## 3.5 前端配置与启动
 
-进入前端目录下载相关依赖
+进入前端目录下载相关依赖：
 
 ```bash
 # 进入前端目录
@@ -280,13 +283,13 @@ echo "VITE_API_BASE_URL=http://localhost:8090" > .env.development
 pnpm dev
 ```
 
-前端服务默认运行在 `http://localhost:3000`
+前端服务默认运行在 `http://localhost:3000` 。
 
 ### 3.5.1 网站运行时间起始日期修改（可选）
 
 > 场景：更换服务器或迁移部署路径后，希望重置首页底部「本站已平稳运行 X 天」的统计起始时间。
 
-假设线上部署路径为 `/data/myBlog`，可以在服务器上执行以下命令，一键更新前端布局文件中的 `siteStartDate` 为当前时间：
+假设线上部署路径为 `/data/myBlog `，可以在服务器上执行以下命令，一键更新前端布局文件中的 `siteStartDate` 为当前时间：
 
 ```bash
 sed -i "/^const siteStartDate/c const siteStartDate = new Date('$(date '+%F %T')')" /web/gin-vue3-blog/blog-frontend/src/layouts/DefaultLayout.vue
@@ -298,41 +301,36 @@ sed -i "/^const siteStartDate/c const siteStartDate = new Date('$(date '+%F %T')
 
 开发环境下，如需修改后端监听端口，只需按以下步骤同步调整配置：
 
-- **后端（Go 服务）**
+- **后端（Go 服务）：**
   - 编辑 `blog-backend/config/config-dev.yml`：
-    - 将
-      - `app.port: 8080`
-      改为
-      - `app.port: 8090`
+    - 将 `app.port: 8080` 改为 `app.port: 8090`
   - 重启后端服务：
     - `cd blog-backend && go run cmd/server/main.go`
   - 确认浏览器或 `curl` 能访问新的端口：`http://localhost:8090/api/blog/author`
-
-- **前端开发服务器（Vite 代理）**
+- **前端开发服务器（Vite 代理）：**
   - 在 `blog-frontend` 目录下创建或修改 `.env.development`：
     - `VITE_API_BASE_URL=http://localhost:8090`
   - `vite.config.ts` 中已通过 `VITE_API_BASE_URL` 自动配置代理目标，因此修改环境变量后**需重新执行**：
     - `cd blog-frontend && pnpm dev`
-
-- **生产环境（可选）**
-  - 后端：在 `config/config-prod.yml` 中同步修改 `app.port`。
-  - Nginx：将所有 `127.0.0.1:8080` 的 `proxy_pass` 目标修改为新端口（如 `127.0.0.1:8090`）。
-  - 如前端打包使用 `.env.production` 配置 API 地址，需同步更新其中的 `VITE_API_BASE_URL`。
+- **生产环境（可选）：**
+  - 后端：在 `config/config-prod.yml` 中同步修改 `app.port`
+  - Nginx：将所有 `127.0.0.1:8080` 的 `proxy_pass` 目标修改为新端口（如 `127.0.0.1:8090`）
+  - 如前端打包使用 `.env.production` 配置 API 地址，需同步更新其中的 `VITE_API_BASE_URL`
 
 ### 3.5.3 访问系统
 
-- **前台首页**: http://localhost:3000
-- **管理后台**: http://localhost:3000/admin
-- **默认管理员账号**: 
-  - 用户名: `admin`
-  - 密码: `password`
+- **前台首页**：http://localhost:3000
+- **管理后台**：http://localhost:3000/admin
+- **默认管理员账号**：
+  - 用户名：`admin`
+  - 密码：`password`
 
 ## 3.6 邮箱配置说明
 
 ### 3.6.1 QQ邮箱授权码获取
 
 1. 登录QQ邮箱网页版
-2. 进入 **设置** → **账户**
+2. 进入 **设置** → **账号与安全** → **安全设置**
 3. 找到 **POP3/IMAP/SMTP/Exchange/CardDAV/CalDAV服务**
 4. 开启 **POP3/SMTP服务** 或 **IMAP/SMTP服务**
 5. 点击 **生成授权码**，按提示发送短信
@@ -340,7 +338,7 @@ sed -i "/^const siteStartDate/c const siteStartDate = new Date('$(date '+%F %T')
 
 ### 3.6.2 其他邮箱配置
 
-**163邮箱**:
+**163邮箱**：
 
 ```yaml
 email:
@@ -351,7 +349,7 @@ email:
   from_name: 菱风叙
 ```
 
-**Gmail**:
+**Gmail**：
 
 ```yaml
 email:
@@ -364,11 +362,130 @@ email:
 
 
 
-# 四、生产环境部署
+# 四、Docker Compose 快速部署（推荐）
 
-## 4.1 快速部署脚本
+所有相关文件统一放在 `deploy/` 目录下，单镜像包含前端（Nginx）、后端（blog-backend）、Gitee 日历 API，通过 supervisord 管理多进程。
 
-项目提供了自动化部署管理脚本 `management.sh`，支持以下操作：
+```bash
+deploy/
+├── Dockerfile              # 多阶段构建镜像
+├── docker-compose.yml      # 容器编排
+├── backend-config/         # 后端配置目录（挂载到容器）
+├── backend-env/
+│   └── .env.config.prod    # 敏感环境变量（不提交 Git）
+├── uploads/                # 上传文件持久化
+├── logs/                   # 日志持久化
+├── PgSqlData/              # PostgreSQL 数据持久化
+├── redisData/              # Redis 数据持久化
+└── docker/
+    ├── nginx/default.conf  # 容器内 Nginx 配置
+    └── supervisord.conf    # 进程管理配置
+```
+
+## 4.1 准备配置文件
+
+```bash
+# 复制后端配置到挂载目录
+cp blog-backend/config/config.yml deploy/backend-config/
+cp blog-backend/config/config-prod.yml deploy/backend-config/
+
+# 创建敏感环境变量文件
+mkdir deploy/backend-env
+cp blog-backend/config/env.config.example deploy/backend-env/.env.config.prod
+vim deploy/backend-env/.env.config.prod
+```
+
+`.env.config.prod` 关键配置项：
+
+```bash
+# 数据库（使用新建容器时填 172.17.0.1，使用已有容器时填对应 IP）
+DB_HOST=172.17.0.1
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_postgres_password
+DB_NAME=blogdb
+
+# Redis
+REDIS_HOST=172.17.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=your_redis_password
+
+# JWT
+JWT_SECRET=your_jwt_secret
+```
+
+## 4.2 构建镜像
+
+如果不想使用阿里云镜像仓库的镜像，可直接在本地手动构建（默认使用阿里云镜像仓库地址）：
+
+```bash
+# 在 deploy/ 目录下构建（构建上下文为项目根目录）
+cd deploy
+docker build -t gin-vue3-blog:prod -f Dockerfile ..
+```
+
+## 4.3 启动服务
+
+`docker-compose.yml` 支持两种模式，按需选择：
+
+**模式一：新建 PostgreSQL + Redis 容器（默认）**
+
+首次启动会自动创建 `blogdb` 数据库并导入 `blog-backend/sql/init.sql` 初始数据：
+
+```bash
+cd deploy
+docker compose up -d
+```
+
+**模式二：使用已有容器**
+
+编辑 `deploy/docker-compose.yml`：
+
+1. 注释掉 `postgres` 和 `redis` 服务块
+2. 注释掉 `blog.depends_on` 块
+3. 取消注释 `blog.environment` 中的 `DB_HOST` / `REDIS_HOST` 并填入已有容器地址
+
+```bash
+cd deploy
+docker compose up -d
+```
+
+## 4.4 服务管理
+
+```bash
+# 查看服务状态
+docker compose ps
+
+# 查看日志
+docker compose logs -f blog
+
+# 重启 blog 服务
+docker compose restart blog
+
+# 停止所有服务
+docker compose down
+
+# 停止并删除数据卷（谨慎！数据会丢失）
+docker compose down -v
+```
+
+## 4.5 宿主机 Nginx 反代（可选）
+
+如需通过宿主机 Nginx 配置 HTTPS，将 `docker-compose.yml` 中端口改为 `8080:80`，然后参考 `nginx-config/go-blog-prod-docker.conf` 配置宿主机 Nginx。
+
+**服务访问地址：**
+
+- **博客前台**：`http://localhost:80`（或宿主机 Nginx 反代后的域名）
+- **PostgreSQL**：`localhost:5432`
+- **Redis**：`localhost:6379`
+
+
+
+# 五、生产环境部署
+
+## 5.1 快速部署脚本
+
+项目提供了自动化部署管理脚本 `management.sh` ，支持以下操作：
 
 | 命令 | 功能说明 |
 |------|----------|
@@ -404,45 +521,42 @@ chmod +x management.sh
 > - 项目配置文件已正确设置（`.env.config.prod` 等）
 > - Nginx 反向代理已配置完成（参考 [4.4 Nginx反向代理](#44-nginx反向代理)）
 
-## 4.2 后端配置及部署
+## 5.2 后端配置及部署
 
-> 和`本地开发快速启动`流程基本一致，这里将详细补充说明
+> 和`本地开发快速启动`流程基本一致，这里将详细补充说明。
 
-### 4.2.1 方式一: 本地编译部署
+### 5.2.1.1 启动 Gitee Calendar API 服务（必选，贡献热力图依赖）
 
-我自己用的是这个方式
+1. **部署 gitee-calendar-api 服务**：
 
-#### 4.2.1.1 启动 Gitee Calendar API 服务
+本仓库已自带编译好的 `gitee-calendar-api`（根目录），可直接赋予执行权限使用（默认占用端口为 `8081` ）。若需查看/自行编译源码，可访问：`https://gitee.com/WuYiLingOps/go-code-calendar-api.git`
 
-1. **部署 gitee-calendar-api 服务**  
-   本仓库已自带编译好的 `gitee-calendar-api`（根目录），可直接赋予执行权限使用（默认占用端口为8081）。若需查看/自行编译源码，可访问：`https://gitee.com/WuYiLingOps/go-code-calendar-api.git`
-
-   ```bash
-   cd /web/gin-vue3-blog/gitee-calendar-api
-   chmod +x gitee-calendar-api
-   ```
+```bash
+cd /web/gin-vue3-blog/gitee-calendar-api
+chmod +x gitee-calendar-api
+```
 
 2. **启动 gitee-calendar-api 服务**（示例为简单后台运行方式，生产环境可用 systemd 管理）：
 
-   ```bash
-   # 前台调试运行
-   ./gitee-calendar-api
-   
-   # 或后台运行（输出到 gitee-calendar-api.log）
-   nohup ./gitee-calendar-api > gitee-calendar-api.log 2>&1 &
-   ```
+```bash
+# 前台调试运行
+./gitee-calendar-api
 
-   默认监听端口为 `8081`，路径为 `/api`，即本机访问地址为：`http://127.0.0.1:8081/api?user=你的Gitee用户名`。
+# 或后台运行（输出到 gitee-calendar-api.log）
+nohup ./gitee-calendar-api > gitee-calendar-api.log 2>&1 &
+```
 
-   > **说明**：
-   >
-   > - `gitee-calendar-api` 现在由**后端调用**，前端不再直接访问该服务
-   > - 前端通过后端 API `/api/calendar/gitee` 获取热力图数据，后端会调用 `gitee-calendar-api` 并缓存结果（20分钟过期）
-   > - `gitee-calendar-api` 通常部署在与后端相同的服务器上，通过 `127.0.0.1:8081` 访问，无需通过 Nginx 暴露给外部
+默认监听端口为 `8081`，路径为 `/api`，即本机访问地址为：`http://127.0.0.1:8081/api?user=你的Gitee用户名`。
 
-3. 配置 **gitee-calendar-api 访问白名单**（可选）
+> **说明**：
+>
+> - `gitee-calendar-api` 现在由**后端调用**，前端不再直接访问该服务
+> - 前端通过后端 API `/api/calendar/gitee` 获取热力图数据，后端会调用 `gitee-calendar-api` 并缓存结果（20分钟过期）
+> - `gitee-calendar-api` 通常部署在与后端相同的服务器上，通过 `127.0.0.1:8081` 访问，无需通过 Nginx 暴露给外部
 
-> 防止api被盗用和滥用
+3. **配置 gitee-calendar-api 访问白名单**（可选）：
+
+> 目的是防止 api 被盗用和滥用。
 
 ```bash
 [root@vm-6-11-ubuntu /web/gin-vue3-blog]# cat .env-gitee-calendar-api 
@@ -461,11 +575,12 @@ chmod +x management.sh
 # 如果此文件存在，只有白名单中的 IP 可以访问 API
 ```
 
-#### 4.2.1.2 配置后端 Gitee Calendar API 地址
+### 5.2.1.2 配置后端 Gitee Calendar API 地址（必选，生产环境统一用环境变量）
 
-> 必选，生产环境统一用环境变量
+> 必选，生产环境统一用环境变量。
 
-**修改环境配置**  
+1. **修改环境配置**：
+
 修改 `config/config.yml` 中的 `env: dev` 为 `env: prod`，系统会自动加载 `config-prod.yml`：
 
 ```yaml
@@ -473,10 +588,16 @@ chmod +x management.sh
 env: prod
 ```
 
-> **创建环境变量文件**  
-> 在后端根目录创建（或编辑）`.env.config.prod`，通过环境变量配置 `gitee-calendar-api` 服务地址（不再修改 `config/config-prod.yml`）。**模板已提供：`blog-backend/config/env.config.example`**，可直接复制为 `.env.config.prod` 后按需修改：
+2. **创建环境变量文件**：
 
-**通过 Nginx 代理（HTTP 或 HTTPS）**
+在后端根目录创建（或编辑）`.env.config.prod` ，通过环境变量配置 `gitee-calendar-api` 服务地址（不再修改 `config/config-prod.yml`）。**模板已提供：`blog-backend/config/env.config.example`** ，可直接复制为 `.env.config.prod` 后按需修改：
+
+```bash
+# .env.config.prod
+GITEE_CALENDAR_API_URL=http://127.0.0.1:8081/api
+```
+
+3. **通过 Nginx 代理（HTTP 或 HTTPS）**：
 
 如果 `gitee-calendar-api` 通过 Nginx 代理访问，可配置为：
 
@@ -490,7 +611,14 @@ GITEE_CALENDAR_API_URL=https://your-domain.com/gitee-calendar-api
 # 示例：GITEE_CALENDAR_API_URL=https://huangjingblog.cn/gitee-calendar-api
 ```
 
-构建并启动后端服务
+> **缓存与调用路径小结：**
+>
+> - 前端页面应统一通过博客后端提供的接口访问贡献热力图：`/api/calendar/gitee?user=<Gitee用户名>`。  
+> - 后端在该接口内部调用 `GITEE_CALENDAR_API_URL` 指向的 `gitee-calendar-api` 服务，并将结果缓存在 Redis 中，键名为：`gitee_calendar:<Gitee用户名>`。  
+> - 若前端直接访问 `https://your-domain.com/gitee-calendar-api?user=...`（仅走 Nginx→gitee-calendar-api），将**不会经过博客后端逻辑，也不会写入上述 Redis 缓存键**，不利于缓存复用与监控。  
+> - 推荐做法：前端只使用 `/api/calendar/gitee`，`/gitee-calendar-api` 仅作为后端内部调用或调试入口。
+
+构建并启动后端服务：
 
 ```bash
 cd blog-backend
@@ -515,11 +643,11 @@ nohup ./blog-backend > app.log 2>&1 &
 > - **环境变量文件**：`.env.config.dev` 和 `.env.config.prod` 使用相同的配置项（参考 `env.config.example`），但实际值不同
 > - **敏感信息**：建议全部通过环境变量文件管理，而不是写死在 YAML 配置文件中
 
-#### 4.2.1.3 加入systemd管理
+### 5.2.1.3 加入systemd管理
 
 可参考如下：
 
-> api
+> api：
 
 ```bash
 cat > /etc/systemd/system/gitee-api.service <<EOF
@@ -538,7 +666,7 @@ WantedBy=multi-user.target
 EOF
 ```
 
-> 后端
+> 后端：
 
 ```bash
 cat > /etc/systemd/system/blog.service <<EOF
@@ -558,9 +686,9 @@ WantedBy=multi-user.target
 EOF
 ```
 
-#### 4.2.1.4 服务启动脚本参考(可选)
+### 5.2.1.4 服务启动脚本参考（可选）
 
-> 后端服务启动脚本
+> 后端服务启动脚本：
 
 ```bash
 #!/bin/bash
@@ -623,7 +751,7 @@ case $1 in
 esac
 ```
 
-> gitee api 启动脚本
+> gitee api 启动脚本：
 
 ```bash
 #!/bin/bash
@@ -680,215 +808,9 @@ case $1 in
 esac
 ```
 
+## 5.3 前端构建与配置
 
-
-### 4.2.2 方式二：Docker Compose（推荐）
-
-所有相关文件统一放在 `deploy/` 目录下，单镜像包含前端（Nginx）、后端（blog-backend）、Gitee 日历 API，通过 supervisord 管理多进程。
-
-```
-deploy/
-├── Dockerfile              # 多阶段构建镜像
-├── docker-compose.yml      # 容器编排
-├── backend-config/         # 后端配置目录（挂载到容器）
-├── backend-env/
-│   └── .env.config.prod    # 敏感环境变量（不提交 Git）
-├── uploads/                # 上传文件持久化
-├── logs/                   # 日志持久化
-├── PgSqlData/              # PostgreSQL 数据持久化
-├── redisData/              # Redis 数据持久化
-└── docker/
-    ├── nginx/default.conf  # 容器内 Nginx 配置
-    └── supervisord.conf    # 进程管理配置
-```
-
-#### 4.2.2.1 准备配置文件
-
-```bash
-# 复制后端配置到挂载目录
-cp blog-backend/config/config.yml deploy/backend-config/
-cp blog-backend/config/config-prod.yml deploy/backend-config/
-
-# 创建敏感环境变量文件
-mkdir deploy/backend-env
-cp blog-backend/config/env.config.example deploy/backend-env/.env.config.prod
-vim deploy/backend-env/.env.config.prod
-```
-
-`.env.config.prod` 关键配置项：
-
-```bash
-# 数据库（使用新建容器时填 172.17.0.1，使用已有容器时填对应 IP）
-DB_HOST=172.17.0.1
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=your_postgres_password
-DB_NAME=blogdb
-
-# Redis
-REDIS_HOST=172.17.0.1
-REDIS_PORT=6379
-REDIS_PASSWORD=your_redis_password
-
-# JWT
-JWT_SECRET=your_jwt_secret
-```
-
-#### 4.2.2.2 构建镜像
-
-如果不想使用阿里云镜像仓库的镜像，可直接在本地手动构建（默认使用阿里云镜像仓库地址）：
-
-```bash
-# 在 deploy/ 目录下构建（构建上下文为项目根目录）
-cd deploy
-docker build -t gin-vue3-blog:prod -f Dockerfile ..
-```
-
-#### 4.2.2.3 启动服务
-
-`docker-compose.yml` 支持两种模式，按需选择：
-
-**模式一：新建 PostgreSQL + Redis 容器（默认）**
-
-首次启动会自动创建 `blogdb` 数据库并导入 `blog-backend/sql/init.sql` 初始数据。
-
-```bash
-cd deploy
-docker compose up -d
-```
-
-**模式二：使用已有容器**
-
-编辑 `deploy/docker-compose.yml`：
-1. 注释掉 `postgres` 和 `redis` 服务块
-2. 注释掉 `blog.depends_on` 块
-3. 取消注释 `blog.environment` 中的 `DB_HOST` / `REDIS_HOST` 并填入已有容器地址
-
-```bash
-cd deploy
-docker compose up -d
-```
-
-#### 4.2.2.4 服务管理
-
-```bash
-# 查看服务状态
-docker compose ps
-
-# 查看日志
-docker compose logs -f blog
-
-# 重启 blog 服务
-docker compose restart blog
-
-# 停止所有服务
-docker compose down
-
-# 停止并删除数据卷（谨慎！数据会丢失）
-docker compose down -v
-```
-
-#### 4.2.2.5 宿主机 Nginx 反代（可选）
-
-如需通过宿主机 Nginx 配置 HTTPS，将 `docker-compose.yml` 中端口改为 `8080:80`，然后参考 `nginx-config/go-blog-prod-docker.conf` 配置宿主机 Nginx。
-
-**服务访问地址：**
-
-- **博客前台**: `http://localhost:80`（或宿主机 Nginx 反代后的域名）
-- **PostgreSQL**: `localhost:5432`
-- **Redis**: `localhost:6379`
-
-## 4.3 前端构建与配置
-
-### 4.3.1 启动 Gitee Calendar API 服务（必选，贡献热力图依赖）
-
-1. **部署 gitee-calendar-api 服务**  
-   本仓库已自带编译好的 `gitee-calendar-api`（根目录），可直接赋予执行权限使用（默认占用端口为8081）。若需查看/自行编译源码，可访问：`https://gitee.com/WuYiLingOps/go-code-calendar-api.git`
-
-   ```bash
-   cd /web/gin-vue3-blog/gitee-calendar-api
-   chmod +x gitee-calendar-api
-   ```
-
-2. **启动 gitee-calendar-api 服务**（示例为简单后台运行方式，生产环境可用 systemd 管理）：
-
-   ```bash
-   # 前台调试运行
-   ./gitee-calendar-api
-   
-   # 或后台运行（输出到 gitee-calendar-api.log）
-   nohup ./gitee-calendar-api > gitee-calendar-api.log 2>&1 &
-   ```
-
-   默认监听端口为 `8081`，路径为 `/api`，即本机访问地址为：`http://127.0.0.1:8081/api?user=你的Gitee用户名`。
-
-   > **说明**：
-   > - `gitee-calendar-api` 现在由**后端调用**，前端不再直接访问该服务
-   > - 前端通过后端 API `/api/calendar/gitee` 获取热力图数据，后端会调用 `gitee-calendar-api` 并缓存结果（20分钟过期）
-   > - `gitee-calendar-api` 通常部署在与后端相同的服务器上，通过 `127.0.0.1:8081` 访问，无需通过 Nginx 暴露给外部
-
-### 4.3.2 配置后端 Gitee Calendar API 地址（必选，生产环境统一用环境变量）
-
-**修改环境配置**  
-修改 `config/config.yml` 中的 `env: dev` 为 `env: prod`，系统会自动加载 `config-prod.yml`：
-
-```yaml
-# config/config.yml
-env: prod
-```
-
-> **创建环境变量文件**  
-> 在后端根目录创建（或编辑）`.env.config.prod`，通过环境变量配置 `gitee-calendar-api` 服务地址（不再修改 `config/config-prod.yml`）。**模板已提供：`blog-backend/config/env.config.example`**，可直接复制为 `.env.config.prod` 后按需修改：
-
-```bash
-# .env.config.prod
-GITEE_CALENDAR_API_URL=http://127.0.0.1:8081/api
-```
-
-**通过 Nginx 代理（HTTP 或 HTTPS）**
-
-如果 `gitee-calendar-api` 通过 Nginx 代理访问，可配置为：
-
-```bash
-# HTTP 方式
-GITEE_CALENDAR_API_URL=http://your-domain.com/gitee-calendar-api
-
-# HTTPS 方式（SSL 证书）
-GITEE_CALENDAR_API_URL=https://your-domain.com/gitee-calendar-api
-# 示例：GITEE_CALENDAR_API_URL=https://huangjingblog.cn/gitee-calendar-api
-```
-
-> **缓存与调用路径小结：**
-> - 前端页面应统一通过博客后端提供的接口访问贡献热力图：`/api/calendar/gitee?user=<Gitee用户名>`。  
-> - 后端在该接口内部调用 `GITEE_CALENDAR_API_URL` 指向的 `gitee-calendar-api` 服务，并将结果缓存在 Redis 中，键名为：`gitee_calendar:<Gitee用户名>`。  
-> - 若前端直接访问 `https://your-domain.com/gitee-calendar-api?user=...`（仅走 Nginx→gitee-calendar-api），将**不会经过博客后端逻辑，也不会写入上述 Redis 缓存键**，不利于缓存复用与监控。  
-> - 推荐做法：前端只使用 `/api/calendar/gitee`，`/gitee-calendar-api` 仅作为后端内部调用或调试入口。
-
-构建并启动后端服务
-
-```bash
-cd blog-backend
-
-# 构建后端可执行文件
-go build -o blog-backend cmd/server/main.go
-
-# 前台运行（调试用）
-./blog-backend
-
-# 后台运行（简单方式，生产环境建议配合 systemd 等守护进程管理）
-nohup ./blog-backend > app.log 2>&1 &
-```
-
-手动在主机安装并启动 PostgreSQL、Redis，按需配置 `config/config-prod.yml`（模板已提供），再以服务方式管理可执行文件。
-
-> **环境配置说明**：
-> - **开发环境**：使用 `config/config-dev.yml` + `.env.config.dev`，日志级别为 `debug`
-> - **生产环境**：使用 `config/config-prod.yml` + `.env.config.prod`，日志级别为 `info`
-> - **环境切换**：修改 `config/config.yml` 中的 `env` 字段（`dev` 或 `prod`）
-> - **环境变量文件**：`.env.config.dev` 和 `.env.config.prod` 使用相同的配置项（参考 `env.config.example`），但实际值不同
-> - **敏感信息**：建议全部通过环境变量文件管理，而不是写死在 YAML 配置文件中
-
-### 4.3.3 前端 `.env.production` 环境变量配置
+### 5.3.1 前端环境变量配置
 
 在 `blog-frontend` 目录下创建或编辑 `.env.production`：
 
@@ -898,6 +820,7 @@ vim .env.production
 ```
 
 **配置说明：**
+
 - **生产环境通常都需要配置** `.env.production`，因为打包后的代码需要知道实际的后端域名/地址
 - **后端端口 = 8080 且使用标准域名**：可以只配置域名（如 `https://your-domain.com`），前端会自动拼接 `/api` 路径
 - **后端端口 ≠ 8080 但使用 Nginx 反向代理**：如果后端在 8090 端口运行，但 Nginx 已将 `https://your-domain.com/api` 反向代理到 `http://127.0.0.1:8090`，前端依然可以直接使用域名（如 `https://your-domain.com`），无需配置端口号
@@ -929,14 +852,14 @@ VITE_API_BASE_URL=https://your-domain.com
 # 示例：VITE_API_BASE_URL=https://huangjingblog.cn/api
 ```
 
-- `VITE_API_BASE_URL`：博客后端（Gin 服务）的基础地址，前端所有业务接口都会基于该地址请求，包括贡献热力图数据（通过 `/api/calendar/gitee` 接口获取）。
-- **推荐配置方式**：只配置域名（如 `https://your-domain.com`），前端会自动拼接 `/api` 路径；如果已配置包含 `/api` 的完整路径，也能正常工作。
+- `VITE_API_BASE_URL`：博客后端（Gin 服务）的基础地址，前端所有业务接口都会基于该地址请求，包括贡献热力图数据（通过 `/api/calendar/gitee` 接口获取）
+- **推荐配置方式**：只配置域名（如 `https://your-domain.com`），前端会自动拼接 `/api` 路径；如果已配置包含 `/api` 的完整路径，也能正常工作
 - **注意**：
-  - `VITE_API_BASE_URL` 只影响前端访问"你自己的后端"时的基础地址；后端再去调用 `gitee-calendar-api` 时使用的是 `GITEE_CALENDAR_API_URL` 等后端环境变量，两者相互独立。  
-  - 若希望 Gitee 贡献热力图在生产环境命中 Redis 缓存，前端必须通过 `/api/calendar/gitee` 调用后端接口，而**不要直接将前端请求指向 `/gitee-calendar-api`**。
-  - 实践上，**无论当前是否更换后端接口/端口，都建议同时配置好 `.env.development` 与 `.env.production` 中的 `VITE_API_BASE_URL`**，以便后续迁移端口或切换域名时只需改环境变量即可，无需修改代码。
+  - `VITE_API_BASE_URL` 只影响前端访问"你自己的后端"时的基础地址；后端再去调用 `gitee-calendar-api` 时使用的是 `GITEE_CALENDAR_API_URL` 等后端环境变量，两者相互独立
+  - 若希望 Gitee 贡献热力图在生产环境命中 Redis 缓存，前端必须通过 `/api/calendar/gitee` 调用后端接口，而**不要直接将前端请求指向 `/gitee-calendar-api`**
+  - 实践上，**无论当前是否更换后端接口/端口，都建议同时配置好 `.env.development` 与 `.env.production` 中的 `VITE_API_BASE_URL`**，以便后续迁移端口或切换域名时只需改环境变量即可，无需修改代码
 
-### 4.3.4 构建前端项目
+### 5.3.2 构建前端项目
 
 ```bash
 cd blog-frontend
@@ -948,7 +871,7 @@ pnpm build
 
 > 说明：前端首页热力图组件位置为 `blog-frontend/src/components/GiteeCalendar.vue`，其数据源现在通过后端 API `/api/calendar/gitee` 获取，后端会自动调用 `gitee-calendar-api` 并缓存结果。
 
-## 4.4 Nginx反向代理
+## 5.4 Nginx反向代理
 
 在服务器上准备前端目录（例如 `/web/gin-vue3-blog/blog-frontend/dist`），**将本地 `dist` 目录中的所有文件和子目录整体上传到该目录**，保持结构不变，例如：
 
@@ -962,7 +885,7 @@ pnpm build
 
 Nginx 中的 `root` 应指向 **包含 `index.html` 的目录本身**（如 `/web/gin-vue3-blog/blog-frontend/dist`，可按实际路径调整），而不是上级目录。
 
-### 4.4.1 HTTP 示例
+### 5.4.1 HTTP 示例
 
 > 配置 Nginx（按需替换域名/路径/证书），`HTTP 示例`：
 
@@ -1030,7 +953,7 @@ server {
 }
 ```
 
-### 4.4.2 HTTPS 示例
+### 5.4.2 HTTPS 示例
 
 > HTTPS 示例（含 80→443 跳转，请替换证书路径）：
 
@@ -1128,9 +1051,9 @@ systemctl reload nginx
 
 
 
-# 五、数据迁移与备份
+# 六、数据迁移与备份
 
-## 5.1 数据迁移
+## 6.1 数据迁移
 
 1. 备份旧库（PostgreSQL 示例）：
 
@@ -1204,7 +1127,7 @@ docker exec -i pg-prod pg_restore -U postgres -d blogdb --clean --if-exists < ba
 
 6. 如不需要历史会话，可清理 Redis（如果有登录态存储），再重启后端。
 
-## 5.2 数据定时备份
+## 6.2 数据定时备份
 
 > 默认每周日 00:00 备份 `blogdb`，备份存放 `/opt/backups/blogdb`，按需调整路径/时间/用户名/容器名。
 
@@ -1294,11 +1217,11 @@ docker exec -i pg-prod pg_restore -U postgres -d blogdb --clean --if-exists < ba
 
 
 
-# 六、主要功能模块及特性
+# 七、主要功能模块及特性
 
-## 6.1 特性
+## 7.1 特性
 
-### 6.1.1 核心功能
+### 7.1.1 核心功能
 
 - **文章管理** - Markdown 编辑器，支持代码高亮、图片上传、Markdown 文件上传解析、HTML 图片标签自动转换、最后更新时间显示、更新提示
 - **SEO友好URL** - 文章URL自动使用拼音slug（如 `/post/windows-huan-jing-xia-an-zhuang-hadoop3-1-2-quan-guo-cheng`），支持中英文混合标题，提升SEO和可读性
@@ -1317,7 +1240,7 @@ docker exec -i pg-prod pg_restore -U postgres -d blogdb --clean --if-exists < ba
 - **主题切换** - 支持亮色/暗色主题
 - **打赏功能** - 导航栏打赏按钮，点击弹出微信/支付宝收款码，未配置时提示暂未开放
 
-### 6.1.2 技术特性
+### 7.1.2 技术特性
 
 - **现代化技术栈** - Vue 3 + TypeScript + Go + PostgreSQL
 - **优雅 UI** - Naive UI 组件库 + 玻璃态设计
@@ -1328,7 +1251,7 @@ docker exec -i pg-prod pg_restore -U postgres -d blogdb --clean --if-exists < ba
 - **自动清理** - 定时清理过期数据，保持数据库整洁
 - **易于部署** - Docker 支持 + 详细部署文档
 
-### 6.1.3 项目结构
+### 7.1.3 项目结构
 
 ```bash
 myBlog/
@@ -1363,9 +1286,9 @@ myBlog/
 └── README.md              # 项目说明
 ```
 
-## 6.2 主要功能模块
+## 7.2 主要功能模块
 
-### 6.2.1 文章管理
+### 7.2.1 文章管理
 
 - Markdown 编辑器，支持实时预览
 - 代码高亮（支持多种编程语言）
@@ -1378,7 +1301,7 @@ myBlog/
 - 文章置顶和草稿
 - 点赞和浏览统计
 
-### 6.2.2 评论系统
+### 7.2.2 评论系统
 
 - 支持嵌套回复
 - 评论审核
@@ -1390,7 +1313,7 @@ myBlog/
 - **评论通知功能** - 管理员可配置是否接收评论通知邮件（支持文章评论和说说评论通知）
 - **邮件通知优化** - 智能处理SMTP服务器响应，确保邮件发送稳定性
 
-### 6.2.3 说说动态
+### 7.2.3 说说动态
 
 - 发布图文动态
 - 多图上传（最多9张）
@@ -1398,7 +1321,7 @@ myBlog/
 - **评论功能** - 支持评论和嵌套回复，采用朋友圈风格设计
 - 公开/私密状态
 
-### 6.2.4 友情链接
+### 7.2.4 友情链接
 
 - 友链管理（后台添加、编辑、删除）
 - 友链展示（前台展示友链列表）
@@ -1407,7 +1330,7 @@ myBlog/
 - 我的友链信息配置（名称、描述、URL、头像、站点图片、RSS订阅等）
 - YAML 格式友链信息导出
 
-### 6.2.5 用户中心
+### 7.2.5 用户中心
 
 - 用户注册和登录
 - 个人资料编辑
@@ -1416,7 +1339,7 @@ myBlog/
 - 忘记密码（邮箱验证码）
 - 邮箱修改（限制一年2次）
 
-### 6.2.6 验证码系统
+### 7.2.6 验证码系统
 
 - **图形验证码** - 基于 Redis 存储，支持数字验证码
 - **验证码存储** - 验证码答案存储在 Redis 中，2分钟自动过期
@@ -1424,7 +1347,7 @@ myBlog/
 - **防暴力破解** - 5 分钟内最多错误 5 次，超过限制需等待
 - **安全机制** - 验证成功后自动删除验证码，确保一次性使用
 
-### 6.2.7 聊天室功能
+### 7.2.7 聊天室功能
 
 - 实时 WebSocket 通信
 - 支持登录用户和匿名访问
@@ -1443,7 +1366,7 @@ myBlog/
   - 配置聊天室全员禁言状态
 - 移动端响应式适配
 
-### 6.2.8 管理后台
+### 7.2.8 管理后台
 
 - 仪表盘数据统计（最近 7 天访问量折线图、文章分类占比）
 - 文章管理
@@ -1475,7 +1398,7 @@ myBlog/
 - 网站设置（包含通知配置、注册控制、打赏收款码配置）
 - IP 访问控制（黑名单/白名单统一管理）
 
-### 6.2.9 打赏功能
+### 7.2.9 打赏功能
 
 - 导航栏右上角常驻打赏按钮（咖啡图标）
 - 点击弹出收款码弹窗，同时展示微信和支付宝收款码
@@ -1484,9 +1407,9 @@ myBlog/
 
 
 
-# 七、技术栈
+# 八、技术栈
 
-## 7.1 前端技术
+## 8.1 前端技术
 
 - **框架**: Vue 3.3 + TypeScript
 - **构建工具**: Vite 5
@@ -1500,7 +1423,7 @@ myBlog/
 - **工具库**: VueUse、Day.js
  - **图标与 Logo**: 基于 SVG 的网站图标 `logo.svg`（通过 `index.html` 作为浏览器标签页 favicon）
 
-## 7.2 后端技术
+## 8.2 后端技术
 
 - **语言**: Go 1.21+
 - **Web 框架**: Gin
@@ -1528,9 +1451,11 @@ myBlog/
 - **密码加密**: bcrypt
 - **定时任务**: Go 原生 Goroutine + Timer
 
-# 八、API 文档
 
-## 8.1 认证相关
+
+# 九、API 文档
+
+## 9.1 认证相关
 
 - `POST /api/auth/register` - 用户注册
 - `POST /api/auth/login` - 用户登录
@@ -1544,7 +1469,7 @@ myBlog/
 - `PUT /api/auth/email` - 修改邮箱
 - `GET /api/auth/email-change-info` - 获取邮箱修改信息
 
-## 8.2 文章相关
+## 9.2 文章相关
 
 - `GET /api/posts` - 获取文章列表
 - `GET /api/posts/:id` - 获取文章详情（支持ID或slug，向后兼容）
@@ -1556,7 +1481,7 @@ myBlog/
 - `DELETE /api/posts/:id` - 删除文章（需认证）
 - `POST /api/posts/:id/like` - 点赞文章
 
-## 8.3 分类相关
+## 9.3 分类相关
 
 - `GET /api/categories` - 获取分类列表
 - `GET /api/categories/:id` - 获取分类详情
@@ -1564,7 +1489,7 @@ myBlog/
 - `PUT /api/categories/:id` - 更新分类（管理员）
 - `DELETE /api/categories/:id` - 删除分类（管理员）
 
-## 8.4 标签相关
+## 9.4 标签相关
 
 - `GET /api/tags` - 获取标签列表
 - `GET /api/tags/:id` - 获取标签详情
@@ -1573,7 +1498,7 @@ myBlog/
 - `PUT /api/tags/:id` - 更新标签（需认证）
 - `DELETE /api/tags/:id` - 删除标签（需认证）
 
-## 8.5 评论相关
+## 9.5 评论相关
 
 - `GET /api/comments/post/:id` - 获取文章评论
 - `GET /api/comments/type?type={type}&target_id={target_id}` - 根据评论类型和目标ID获取评论（用于友链、说说等特殊页面）
@@ -1586,7 +1511,7 @@ myBlog/
 - `PUT /api/comments/:id` - 更新评论（需认证）
 - `DELETE /api/comments/:id` - 删除评论（需认证）
 
-## 8.6 说说相关
+## 9.6 说说相关
 
 - `GET /api/moments` - 获取说说列表
 - `GET /api/moments/:id` - 获取说说详情
@@ -1596,14 +1521,14 @@ myBlog/
 - `DELETE /api/moments/:id` - 删除说说（需认证）
 - `POST /api/moments/:id/like` - 点赞说说
 
-## 8.7 上传相关
+## 9.7 上传相关
 
 - `POST /api/upload/avatar` - 上传头像（需认证）
   - 普通用户：强制使用本地存储，不上传到 OSS/COS
   - 管理员：根据后台配置选择存储方式（本地/OSS/COS）
 - `POST /api/upload/image` - 上传图片（需认证，根据配置选择存储方式）
 
-## 8.8 友链相关
+## 9.8 友链相关
 
 - `GET /api/friend-links` - 获取友链列表（公开）
 - `GET /api/admin/friend-links` - 获取友链列表（管理员）
@@ -1614,7 +1539,7 @@ myBlog/
 - `GET /api/settings/friendlink-info` - 获取我的友链信息（公开）
 - `PUT /api/admin/settings/friendlink-info` - 更新我的友链信息（管理员）
 
-## 8.9 设置相关
+## 9.9 设置相关
 
 - `GET /api/settings/public` - 获取公开设置
 - `GET /api/settings/site` - 获取网站设置（管理员）
@@ -1626,26 +1551,26 @@ myBlog/
 - `PUT /api/admin/settings/register` - 更新注册配置（管理员）
   - 支持配置是否限制用户注册（`disable_register`: `"0"` 允许注册，`"1"` 禁止注册）
 
-## 8.10 验证码相关
+## 9.10 验证码相关
 
 - `GET /api/captcha` - 获取图形验证码
   - 基于 Redis 存储验证码答案（2分钟过期）
   - IP 限流：每个 IP 每分钟最多获取 10 次
   - 防暴力破解：5 分钟内最多错误 5 次
 
-## 8.11 日历相关
+## 9.11 日历相关
 
 - `GET /api/calendar/gitee?user={username}` - 获取 Gitee 贡献热力图数据
   - 后端会调用 `gitee-calendar-api` 并缓存结果（20分钟过期）
   - 参数：`user` - Gitee 用户名
 
-## 8.12 聊天室相关
+## 9.12 聊天室相关
 
 - `WS /api/chat/ws` - WebSocket 连接（支持登录用户和匿名访问）
 - `GET /api/chat/messages` - 获取消息列表
 - `GET /api/chat/online` - 获取在线信息
 
-## 8.13 管理后台相关
+## 9.13 管理后台相关
 
 - `GET /api/admin/dashboard/stats` - 仪表盘统计
 - `GET /api/admin/dashboard/category-stats` - 分类统计
@@ -1655,7 +1580,7 @@ myBlog/
 - `PUT /api/admin/users/:id/role` - 更新用户角色（仅超级管理员）
 - `DELETE /api/admin/users/:id` - 删除用户（仅超级管理员）
 
-## 8.14 操作日志相关（仅超级管理员）
+## 9.14 操作日志相关（仅超级管理员）
 
 - `GET /api/admin/operation-logs` - 获取操作日志列表（支持分页和筛选）
   - 查询参数：`page`、`page_size`、`module`、`action`、`username`
@@ -1680,18 +1605,16 @@ myBlog/
 
 更多详细说明请参考 [后端文档](./blog-backend/README.md)
 
+# 十、开发指南
 
-
-# 九、开发指南
-
-## 9.1 代码规范
+## 10.1 代码规范
 
 - 使用 ESLint + Prettier 格式化代码
 - 遵循 Vue 3 Composition API 风格
 - TypeScript 严格模式
 - Git Commit 规范
 
-## 9.2 目录说明
+## 10.2 目录说明
 
 详见各子项目的 README：
 
@@ -1700,7 +1623,7 @@ myBlog/
 
 
 
-# 十、更新日志
+# 十一、更新日志
 
 ## 2026-02-07
 
