@@ -173,7 +173,7 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 		return
 	}
 
-	util.SuccessWithMessage(c, "验证码已发送到您的邮箱，请查收（有效期15分钟）", nil)
+	util.SuccessWithMessage(c, "验证码已发送到您的邮箱，请查收（有效期5分钟）", nil)
 }
 
 // ResetPassword 重置密码
@@ -250,6 +250,6 @@ func (h *AuthHandler) SendRegisterCode(c *gin.Context) {
 		return
 	}
 
-	util.SuccessWithMessage(c, "验证码已发送到您的邮箱，请查收（有效期15分钟）", nil)
+	util.SuccessWithMessage(c, "验证码已发送到您的邮箱，请查收（有效期5分钟）", nil)
 }
 

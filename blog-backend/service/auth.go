@@ -34,6 +34,11 @@ type AuthService struct {
 	settingRepo     *repository.SettingRepository
 }
 
+const (
+	verificationCodeExpireMinutes = 5
+	verificationResendSeconds     = 60
+)
+
 // NewAuthService 创建认证业务逻辑层实例
 func NewAuthService() *AuthService {
 	return &AuthService{
@@ -285,7 +290,7 @@ func (s *AuthService) ForgotPassword(req *ForgotPasswordRequest, ip string) erro
 	if recent, err := s.resetTokenRepo.GetRecentByEmail(req.Email, 1*60*1000000000); err == nil && recent != nil {
 		remainingTime := 60 - int(time.Since(recent.CreatedAt).Seconds())
 		if remainingTime > 0 {
-			return errors.New(fmt.Sprintf("验证码发送过于频繁，请%d秒后再试", remainingTime))
+			return fmt.Errorf("验证码发送过于频繁，请%d秒后再试", remainingTime)
 		}
 	}
 
@@ -300,7 +305,7 @@ func (s *AuthService) ForgotPassword(req *ForgotPasswordRequest, ip string) erro
 		Email:    req.Email,
 		Token:    token,
 		Code:     code,
-		ExpireAt: util.GetTimeAfterMinutes(15), // 15分钟有效期
+		ExpireAt: util.GetTimeAfterMinutes(verificationCodeExpireMinutes), // 5分钟有效期
 		IsUsed:   false,
 	}
 
@@ -322,12 +327,12 @@ func (s *AuthService) ForgotPassword(req *ForgotPasswordRequest, ip string) erro
 	}
 
 	// 异步发送邮件，避免阻塞请求
-	go func(config util.EmailConfig, email string, verificationCode string) {
-		if err := util.SendResetPasswordEmail(config, email, verificationCode); err != nil {
+	go func(config util.EmailConfig, email string, username string, verificationCode string, expireMinutes int) {
+		if err := util.SendResetPasswordEmail(config, email, username, verificationCode, expireMinutes); err != nil {
 			// 记录错误日志，但不影响主流程
 			fmt.Printf("发送密码重置邮件失败: %v\n", err)
 		}
-	}(emailConfig, req.Email, code)
+	}(emailConfig, req.Email, user.Username, code, verificationCodeExpireMinutes)
 
 	return nil
 }
@@ -445,7 +450,8 @@ func (s *AuthService) GetEmailChangeCount(userID uint) (int64, error) {
 
 // SendRegisterCodeRequest 发送注册验证码请求
 type SendRegisterCodeRequest struct {
-	Email string `json:"email" binding:"required,email"`
+	Username string `json:"username" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
 }
 
 // SendRegisterCode 发送注册验证码
@@ -453,6 +459,16 @@ func (s *AuthService) SendRegisterCode(req *SendRegisterCodeRequest, ip string) 
 	// 检查注册功能是否被禁用
 	if isRegisterDisabled, err := s.isRegisterDisabled(); err == nil && isRegisterDisabled {
 		return errors.New("用户注册功能已关闭")
+	}
+
+	// 验证用户名格式
+	if !util.ValidateUsername(req.Username) {
+		return errors.New("用户名格式不正确（3-20个字符，只能包含字母、数字、下划线）")
+	}
+
+	// 检查用户名是否已存在
+	if _, err := s.userRepo.GetByUsername(req.Username); err == nil {
+		return errors.New("用户名已存在")
 	}
 
 	// 验证邮箱格式
@@ -469,7 +485,7 @@ func (s *AuthService) SendRegisterCode(req *SendRegisterCodeRequest, ip string) 
 	if recent, err := s.resetTokenRepo.GetRecentByEmail(req.Email, 1*60*1000000000); err == nil && recent != nil {
 		remainingTime := 60 - int(time.Since(recent.CreatedAt).Seconds())
 		if remainingTime > 0 {
-			return errors.New(fmt.Sprintf("验证码发送过于频繁，请%d秒后再试", remainingTime))
+			return fmt.Errorf("验证码发送过于频繁，请%d秒后再试", remainingTime)
 		}
 	}
 
@@ -483,7 +499,7 @@ func (s *AuthService) SendRegisterCode(req *SendRegisterCodeRequest, ip string) 
 		Email:    req.Email,
 		Token:    token,
 		Code:     code,
-		ExpireAt: util.GetTimeAfterMinutes(15), // 15分钟有效期
+		ExpireAt: util.GetTimeAfterMinutes(verificationCodeExpireMinutes), // 5分钟有效期
 		IsUsed:   false,
 	}
 
@@ -505,12 +521,12 @@ func (s *AuthService) SendRegisterCode(req *SendRegisterCodeRequest, ip string) 
 	}
 
 	// 异步发送邮件，避免阻塞请求
-	go func(config util.EmailConfig, email string, verificationCode string) {
-		if err := util.SendRegisterVerificationEmail(config, email, verificationCode); err != nil {
+	go func(config util.EmailConfig, email string, username string, verificationCode string, expireMinutes int) {
+		if err := util.SendRegisterVerificationEmail(config, email, username, verificationCode, expireMinutes); err != nil {
 			// 记录错误日志，但不影响主流程
 			fmt.Printf("发送注册验证码邮件失败: %v\n", err)
 		}
-	}(emailConfig, req.Email, code)
+	}(emailConfig, req.Email, req.Username, code, verificationCodeExpireMinutes)
 
 	return nil
 }

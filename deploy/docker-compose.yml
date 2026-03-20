@@ -60,6 +60,7 @@ services:
       - postgres
       - redis
     ports:
+      # 对外访问用的端口8080,可修改
       - "8080:80"
     volumes:
       - ./backend-config:/app/config
@@ -79,6 +80,7 @@ services:
       # REDIS_PORT: "6379"
       # REDIS_PASSWORD: "123456"
     healthcheck:
+      # 该部分为容器内部后端服务端口健康检测,使用默认即可
       test: ["CMD", "curl", "-fs", "http://127.0.0.1:8080/health"]
       interval: 30s
       timeout: 5s
