@@ -53,17 +53,21 @@ func GenerateRandomString(length int) string {
 	return string(result)
 }
 
-// getCurrentYear 获取当前年份字符串
-func getCurrentYear() string {
-	return fmt.Sprintf("%d", time.Now().Year())
+// getCopyrightYear 获取版权年份字符串
+func getCopyrightYear(startYear int) string {
+	currentYear := time.Now().Year()
+	if currentYear <= startYear {
+		return fmt.Sprintf("%d", startYear)
+	}
+	return fmt.Sprintf("%d-%d", startYear, currentYear)
 }
 
-func getVerificationExpiryText() string {
-	return "5 分钟"
+func getVerificationExpiryText(expireMinutes int) string {
+	return fmt.Sprintf("%d 分钟", expireMinutes)
 }
 
 // SendResetPasswordEmail 发送重置密码邮件
-func SendResetPasswordEmail(config EmailConfig, to string, username string, code string) error {
+func SendResetPasswordEmail(config EmailConfig, to string, username string, code string, expireMinutes int) error {
 	// 优先使用配置的网站名称，其次使用发件人名称，最后使用默认值
 	siteName := config.SiteName
 	if siteName == "" {
@@ -74,8 +78,8 @@ func SendResetPasswordEmail(config EmailConfig, to string, username string, code
 	}
 	subject := fmt.Sprintf("【%s】密码重置验证码", siteName)
 
-	year := getCurrentYear()
-	expiryText := getVerificationExpiryText()
+	year := getCopyrightYear(2025)
+	expiryText := getVerificationExpiryText(expireMinutes)
 	data := map[string]interface{}{
 		"SiteName":   siteName,
 		"Username":   username,
@@ -99,13 +103,13 @@ func SendResetPasswordEmail(config EmailConfig, to string, username string, code
 
 ---
 此邮件由系统自动发送，请勿直接回复
-© %s %s`, username, code, expiryText, year, siteName)
+© %s %s. All rights reserved.`, username, code, expiryText, year, siteName)
 
 	return sendEmailHTML(config, to, subject, htmlBody, textBody)
 }
 
 // SendRegisterVerificationEmail 发送注册验证码邮件
-func SendRegisterVerificationEmail(config EmailConfig, to string, username string, code string) error {
+func SendRegisterVerificationEmail(config EmailConfig, to string, username string, code string, expireMinutes int) error {
 	// 优先使用配置的网站名称，其次使用发件人名称，最后使用默认值
 	siteName := config.SiteName
 	if siteName == "" {
@@ -116,8 +120,8 @@ func SendRegisterVerificationEmail(config EmailConfig, to string, username strin
 	}
 	subject := fmt.Sprintf("【%s】注册验证码", siteName)
 
-	year := getCurrentYear()
-	expiryText := getVerificationExpiryText()
+	year := getCopyrightYear(2025)
+	expiryText := getVerificationExpiryText(expireMinutes)
 	data := map[string]interface{}{
 		"SiteName":   siteName,
 		"Username":   username,
@@ -141,7 +145,7 @@ func SendRegisterVerificationEmail(config EmailConfig, to string, username strin
 
 ---
 此邮件由系统自动发送，请勿直接回复
-© %s %s`, username, code, expiryText, year, siteName)
+© %s %s. All rights reserved.`, username, code, expiryText, year, siteName)
 
 	return sendEmailHTML(config, to, subject, htmlBody, textBody)
 }
@@ -167,13 +171,14 @@ func SendAdminCommentNotificationEmail(config EmailConfig, to string, commenterN
 	previewHTML := template.HTMLEscapeString(preview)
 	previewHTML = strings.ReplaceAll(previewHTML, "\n", "<br>")
 
+	copyrightYear := getCopyrightYear(2025)
 	data := map[string]interface{}{
 		"SiteName":       siteName,
 		"PostTitle":      template.HTMLEscapeString(postTitle),
 		"CommenterName":  template.HTMLEscapeString(commenterName),
 		"CommentPreview": template.HTML(previewHTML),
 		"PostURL":        postURL,
-		"Year":           getCurrentYear(),
+		"Year":           copyrightYear,
 	}
 
 	htmlBody := getEmailTemplate("admin_comment_notification", data)
@@ -189,7 +194,7 @@ func SendAdminCommentNotificationEmail(config EmailConfig, to string, commenterN
 
 ---
 此邮件由系统自动发送，请勿直接回复
-© %s %s`, postTitle, commenterName, preview, postURL, getCurrentYear(), siteName)
+© %s %s. All rights reserved.`, postTitle, commenterName, preview, postURL, copyrightYear, siteName)
 
 	return sendEmailHTML(config, to, subject, htmlBody, textBody)
 }
@@ -362,7 +367,7 @@ func getResetPasswordTemplate() string {
                                                 此为系统邮件，请勿回复。
                                             </p>
                                             <p style="max-width: 100%; margin: auto; font-size: 12px; color: #999; text-align: center; line-height: 22px;">
-                                                © {{.Year}} {{.SiteName}}
+                                                © {{.Year}} {{.SiteName}}. All rights reserved.
                                             </p>
                                         </td>
                                         <td style="width: 3.2%; max-width: 30px;"></td>
@@ -464,7 +469,7 @@ func getRegisterVerificationTemplate() string {
                                                 此为系统邮件，请勿回复。
                                             </p>
                                             <p style="max-width: 100%; margin: auto; font-size: 12px; color: #999; text-align: center; line-height: 22px;">
-                                                © {{.Year}} {{.SiteName}}
+                                                © {{.Year}} {{.SiteName}}. All rights reserved.
                                             </p>
                                         </td>
                                         <td style="width: 3.2%; max-width: 30px;"></td>
@@ -566,7 +571,7 @@ func getAdminCommentNotificationTemplate() string {
                                                 此为系统邮件，请勿回复。
                                             </p>
                                             <p style="max-width: 100%; margin: auto; font-size: 12px; color: #999; text-align: center; line-height: 22px;">
-                                                © {{.Year}} {{.SiteName}}
+                                                © {{.Year}} {{.SiteName}}. All rights reserved.
                                             </p>
                                         </td>
                                         <td style="width: 3.2%; max-width: 30px;"></td>

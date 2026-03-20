@@ -78,7 +78,7 @@ import type { FormInst, FormRules } from 'naive-ui'
 import { useAuthStore } from '@/stores'
 import { validateEmail, validateUsername, validatePassword } from '@/utils/validator'
 import type { RegisterForm } from '@/types/auth'
-import { sendRegisterCode } from '@/api/auth'
+import { sendRegisterCode, VERIFICATION_CODE_RESEND_SECONDS } from '@/api/auth'
 
 const router = useRouter()
 const message = useMessage()
@@ -164,7 +164,7 @@ async function handleSendCode() {
     message.success('验证码已发送，请查收邮箱')
     
     // 开始倒计时
-    countdown.value = 60
+    countdown.value = VERIFICATION_CODE_RESEND_SECONDS
     timer = setInterval(() => {
       countdown.value--
       if (countdown.value <= 0 && timer) {

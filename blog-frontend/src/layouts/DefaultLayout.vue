@@ -84,7 +84,7 @@
         <!-- 底部 -->
         <div class="footer">
           <div class="footer-content">
-            <p>&copy; 2025 {{ siteSettings.site_name || defaultSiteName }}. All rights reserved.</p>
+            <p>&copy; {{ copyrightYear }} {{ siteSettings.site_name || defaultSiteName }}. All rights reserved.</p>
             <p class="running-time" v-html="runningTime"></p>
             <div v-if="siteSettings.site_icp || siteSettings.site_police" class="filing-info">
               <a v-if="siteSettings.site_icp" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">
@@ -323,6 +323,11 @@ const isDark = computed(() => appStore.theme === 'dark')
 const siteSettings = ref<SiteSettings>({})
 const defaultSiteName = '菱风叙'
 const runningTime = ref('')
+const copyrightYear = computed(() => {
+  const startYear = siteStartDate.getFullYear()
+  const currentYear = new Date().getFullYear()
+  return currentYear <= startYear ? `${startYear}` : `${startYear}-${currentYear}`
+})
 const headerHidden = ref(false)
 const mainContentRef = ref<any>(null) // 取到组件实例后通过 $el 获取真实 DOM
 const scrollEl = ref<HTMLElement | null>(null)

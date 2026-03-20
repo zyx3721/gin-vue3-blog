@@ -105,7 +105,7 @@ import { useRouter } from 'vue-router'
 import { useMessage, NIcon } from 'naive-ui'
 import type { FormInst, FormRules, FormItemRule } from 'naive-ui'
 import { LockClosedOutline, ShieldCheckmarkOutline, MailOutline } from '@vicons/ionicons5'
-import { forgotPassword, resetPassword } from '@/api/auth'
+import { forgotPassword, resetPassword, VERIFICATION_CODE_RESEND_SECONDS } from '@/api/auth'
 
 const router = useRouter()
 const message = useMessage()
@@ -181,7 +181,7 @@ async function handleSendCode() {
 }
 
 function startCountdown() {
-  countdown.value = 60
+  countdown.value = VERIFICATION_CODE_RESEND_SECONDS
   countdownTimer = window.setInterval(() => {
     countdown.value--
     if (countdown.value <= 0) {

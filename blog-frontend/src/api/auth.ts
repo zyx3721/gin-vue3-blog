@@ -12,6 +12,8 @@
 import { request } from '@/utils/request'
 import type { LoginForm, RegisterForm, LoginResponse, User, ProfileForm, PasswordForm, CaptchaResponse } from '@/types/auth'
 
+export const VERIFICATION_CODE_RESEND_SECONDS = 60
+
 /**
  * 获取图形验证码
  * @returns 返回验证码图片和验证码ID
@@ -22,8 +24,9 @@ export function getCaptcha() {
 
 /**
  * 发送注册验证码邮件
- * @param data 邮箱数据
+ * @param data 注册验证码请求数据
  * @param data.email 用户邮箱地址
+ * @param data.username 用户名，用于邮件模板展示
  * @returns 返回发送结果
  */
 export function sendRegisterCode(data: { email: string; username: string }) {

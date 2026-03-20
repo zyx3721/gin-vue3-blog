@@ -34,7 +34,10 @@ type AuthService struct {
 	settingRepo     *repository.SettingRepository
 }
 
-const verificationCodeExpireMinutes = 5
+const (
+	verificationCodeExpireMinutes = 5
+	verificationResendSeconds     = 60
+)
 
 // NewAuthService 创建认证业务逻辑层实例
 func NewAuthService() *AuthService {
@@ -324,12 +327,12 @@ func (s *AuthService) ForgotPassword(req *ForgotPasswordRequest, ip string) erro
 	}
 
 	// 异步发送邮件，避免阻塞请求
-	go func(config util.EmailConfig, email string, username string, verificationCode string) {
-		if err := util.SendResetPasswordEmail(config, email, username, verificationCode); err != nil {
+	go func(config util.EmailConfig, email string, username string, verificationCode string, expireMinutes int) {
+		if err := util.SendResetPasswordEmail(config, email, username, verificationCode, expireMinutes); err != nil {
 			// 记录错误日志，但不影响主流程
 			fmt.Printf("发送密码重置邮件失败: %v\n", err)
 		}
-	}(emailConfig, req.Email, user.Username, code)
+	}(emailConfig, req.Email, user.Username, code, verificationCodeExpireMinutes)
 
 	return nil
 }
@@ -518,12 +521,12 @@ func (s *AuthService) SendRegisterCode(req *SendRegisterCodeRequest, ip string) 
 	}
 
 	// 异步发送邮件，避免阻塞请求
-	go func(config util.EmailConfig, email string, username string, verificationCode string) {
-		if err := util.SendRegisterVerificationEmail(config, email, username, verificationCode); err != nil {
+	go func(config util.EmailConfig, email string, username string, verificationCode string, expireMinutes int) {
+		if err := util.SendRegisterVerificationEmail(config, email, username, verificationCode, expireMinutes); err != nil {
 			// 记录错误日志，但不影响主流程
 			fmt.Printf("发送注册验证码邮件失败: %v\n", err)
 		}
-	}(emailConfig, req.Email, req.Username, code)
+	}(emailConfig, req.Email, req.Username, code, verificationCodeExpireMinutes)
 
 	return nil
 }
