@@ -386,10 +386,6 @@ deploy/
 ## 4.1 准备配置文件
 
 ```bash
-# 复制后端配置到挂载目录
-cp blog-backend/config/config.yml deploy/backend-config/
-cp blog-backend/config/config-prod.yml deploy/backend-config/
-
 # 创建敏感环境变量文件
 mkdir deploy/backend-env
 cp blog-backend/config/env.config.example deploy/backend-env/.env.config.prod # 必选
