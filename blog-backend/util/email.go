@@ -19,6 +19,7 @@ import (
 	"mime"
 	"net/smtp"
 	"strings"
+	"time"
 )
 
 // EmailConfig 邮件配置结构体
@@ -52,8 +53,17 @@ func GenerateRandomString(length int) string {
 	return string(result)
 }
 
+// getCurrentYear 获取当前年份字符串
+func getCurrentYear() string {
+	return fmt.Sprintf("%d", time.Now().Year())
+}
+
+func getVerificationExpiryText() string {
+	return "5 分钟"
+}
+
 // SendResetPasswordEmail 发送重置密码邮件
-func SendResetPasswordEmail(config EmailConfig, to string, code string) error {
+func SendResetPasswordEmail(config EmailConfig, to string, username string, code string) error {
 	// 优先使用配置的网站名称，其次使用发件人名称，最后使用默认值
 	siteName := config.SiteName
 	if siteName == "" {
@@ -64,34 +74,38 @@ func SendResetPasswordEmail(config EmailConfig, to string, code string) error {
 	}
 	subject := fmt.Sprintf("【%s】密码重置验证码", siteName)
 
+	year := getCurrentYear()
+	expiryText := getVerificationExpiryText()
 	data := map[string]interface{}{
-		"SiteName": siteName,
-		"Code":     code,
-		"Year":     "2025",
+		"SiteName":   siteName,
+		"Username":   username,
+		"Code":       code,
+		"Year":       year,
+		"ExpiryText": expiryText,
 	}
 
 	htmlBody := getEmailTemplate("reset_password", data)
 	textBody := fmt.Sprintf(`您好！
 
-您正在进行密码重置操作，请使用以下验证码完成验证：
+您当前正在重置 %s 用户的密码，请使用以下验证码完成验证：
 
 验证码：%s
 
 重要提示：
-• 验证码有效期为 15 分钟，请尽快使用
+• 验证码有效期为 %s，请尽快使用
 • 请勿将验证码告诉他人，以保护账号安全
 
 如果这不是您本人的操作，请忽略此邮件，您的账号仍然是安全的。
 
 ---
 此邮件由系统自动发送，请勿直接回复
-© 2025 %s`, code, siteName)
+© %s %s`, username, code, expiryText, year, siteName)
 
 	return sendEmailHTML(config, to, subject, htmlBody, textBody)
 }
 
 // SendRegisterVerificationEmail 发送注册验证码邮件
-func SendRegisterVerificationEmail(config EmailConfig, to string, code string) error {
+func SendRegisterVerificationEmail(config EmailConfig, to string, username string, code string) error {
 	// 优先使用配置的网站名称，其次使用发件人名称，最后使用默认值
 	siteName := config.SiteName
 	if siteName == "" {
@@ -102,28 +116,32 @@ func SendRegisterVerificationEmail(config EmailConfig, to string, code string) e
 	}
 	subject := fmt.Sprintf("【%s】注册验证码", siteName)
 
+	year := getCurrentYear()
+	expiryText := getVerificationExpiryText()
 	data := map[string]interface{}{
-		"SiteName": siteName,
-		"Code":     code,
-		"Year":     "2025",
+		"SiteName":   siteName,
+		"Username":   username,
+		"Code":       code,
+		"Year":       year,
+		"ExpiryText": expiryText,
 	}
 
 	htmlBody := getEmailTemplate("register_verification", data)
 	textBody := fmt.Sprintf(`您好！
 
-欢迎注册%s，请使用以下验证码完成注册：
+您当前正在注册 %s 用户，请使用以下验证码完成注册：
 
 验证码：%s
 
 重要提示：
-• 验证码有效期为 15 分钟，请尽快使用
+• 验证码有效期为 %s，请尽快使用
 • 请勿将验证码告诉他人，以保护账号安全
 
 如果这不是您本人的操作，请忽略此邮件。
 
 ---
 此邮件由系统自动发送，请勿直接回复
-© 2025 %s`, siteName, code, siteName)
+© %s %s`, username, code, expiryText, year, siteName)
 
 	return sendEmailHTML(config, to, subject, htmlBody, textBody)
 }
@@ -155,7 +173,7 @@ func SendAdminCommentNotificationEmail(config EmailConfig, to string, commenterN
 		"CommenterName":  template.HTMLEscapeString(commenterName),
 		"CommentPreview": template.HTML(previewHTML),
 		"PostURL":        postURL,
-		"Year":           "2025",
+		"Year":           getCurrentYear(),
 	}
 
 	htmlBody := getEmailTemplate("admin_comment_notification", data)
@@ -171,7 +189,7 @@ func SendAdminCommentNotificationEmail(config EmailConfig, to string, commenterN
 
 ---
 此邮件由系统自动发送，请勿直接回复
-© 2025 %s`, postTitle, commenterName, preview, postURL, siteName)
+© %s %s`, postTitle, commenterName, preview, postURL, getCurrentYear(), siteName)
 
 	return sendEmailHTML(config, to, subject, htmlBody, textBody)
 }
@@ -297,7 +315,7 @@ func getResetPasswordTemplate() string {
                                             <p style="font-size: 14px; color: #333; line-height: 24px; margin: 0;">您好！</p>
                                             
                                             <p style="line-height: 24px; margin: 6px 0px 0px; overflow-wrap: break-word; word-break: break-all;">
-                                                <span style="color: rgb(51, 51, 51); font-size: 14px;">您正在进行密码重置操作，请使用以下验证码完成验证：</span>
+                                                <span style="color: rgb(51, 51, 51); font-size: 14px;">您当前正在重置 {{.Username}} 用户的密码，请使用以下验证码完成验证：</span>
                                             </p>
                                             
                                             <!-- 验证码框 -->
@@ -311,7 +329,7 @@ func getResetPasswordTemplate() string {
                                                 <span style="color: rgb(51, 51, 51); font-size: 14px; font-weight: bold;">重要提示：</span>
                                             </p>
                                             <p style="line-height: 24px; margin: 6px 0px 0px; overflow-wrap: break-word; word-break: break-all;">
-                                                <span style="color: rgb(51, 51, 51); font-size: 14px;">• 验证码有效期为 15 分钟，请尽快使用</span>
+                                                <span style="color: rgb(51, 51, 51); font-size: 14px;">• 验证码有效期为 {{.ExpiryText}}，请尽快使用</span>
                                             </p>
                                             <p style="line-height: 24px; margin: 6px 0px 0px; overflow-wrap: break-word; word-break: break-all;">
                                                 <span style="color: rgb(51, 51, 51); font-size: 14px;">• 请勿将验证码告诉他人，以保护账号安全</span>
@@ -399,7 +417,7 @@ func getRegisterVerificationTemplate() string {
                                             <p style="font-size: 14px; color: #333; line-height: 24px; margin: 0;">您好！</p>
                                             
                                             <p style="line-height: 24px; margin: 6px 0px 0px; overflow-wrap: break-word; word-break: break-all;">
-                                                <span style="color: rgb(51, 51, 51); font-size: 14px;">欢迎注册{{.SiteName}}，请使用以下验证码完成注册：</span>
+                                                <span style="color: rgb(51, 51, 51); font-size: 14px;">您当前正在注册 {{.Username}} 用户，请使用以下验证码完成注册：</span>
                                             </p>
                                             
                                             <!-- 验证码框 -->
@@ -413,7 +431,7 @@ func getRegisterVerificationTemplate() string {
                                                 <span style="color: rgb(51, 51, 51); font-size: 14px; font-weight: bold;">重要提示：</span>
                                             </p>
                                             <p style="line-height: 24px; margin: 6px 0px 0px; overflow-wrap: break-word; word-break: break-all;">
-                                                <span style="color: rgb(51, 51, 51); font-size: 14px;">• 验证码有效期为 15 分钟，请尽快使用</span>
+                                                <span style="color: rgb(51, 51, 51); font-size: 14px;">• 验证码有效期为 {{.ExpiryText}}，请尽快使用</span>
                                             </p>
                                             <p style="line-height: 24px; margin: 6px 0px 0px; overflow-wrap: break-word; word-break: break-all;">
                                                 <span style="color: rgb(51, 51, 51); font-size: 14px;">• 请勿将验证码告诉他人，以保护账号安全</span>
