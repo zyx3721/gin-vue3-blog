@@ -138,6 +138,16 @@ const rules: FormRules = {
 }
 
 async function handleSendCode() {
+  if (!formData.username) {
+    message.warning('请先输入用户名')
+    return
+  }
+
+  if (!validateUsername(formData.username)) {
+    message.warning('请输入正确的用户名格式')
+    return
+  }
+
   if (!formData.email) {
     message.warning('请先输入邮箱')
     return
@@ -150,7 +160,7 @@ async function handleSendCode() {
 
   try {
     sendingCode.value = true
-    await sendRegisterCode({ email: formData.email })
+    await sendRegisterCode({ email: formData.email, username: formData.username })
     message.success('验证码已发送，请查收邮箱')
     
     // 开始倒计时
