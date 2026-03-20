@@ -1,7 +1,7 @@
 #********************************************************************
 # 项目名称：gin-vue3-blog
 # 文件名称：docker-compose.yml
-# 创建时间：2026-03-18 00:00:00
+# 创建时间：2026-03-18 16:12:00
 #
 # 系统用户：wyl
 # 作　　者：無以菱
@@ -64,6 +64,7 @@ services:
     volumes:
       - ./backend-config:/app/config
       - ./backend-env/.env.config.prod:/app/.env.config.prod:ro
+      #- ./backend-env/.env-gitee-calendar-api:/app/.env-gitee-calendar-api:ro # gitee api访问白名单（可选）
       - ./uploads:/app/uploads
       - ./logs:/var/log/gin-vue3-blog
     environment:
