@@ -66,13 +66,13 @@
           <n-text style="margin-top: 12px; display: block">
             点击或拖拽图片上传
           </n-text>
-          <n-text depth="3" style="font-size: 12px; margin-top: 8px; display: block">
+          <n-text v-if="!compact" depth="3" style="font-size: 12px; margin-top: 8px; display: block">
             支持 jpg、png、gif 格式，文件大小不超过 {{ maxSizeMB }}MB
           </n-text>
-          <n-text depth="3" style="font-size: 12px; margin-top: 6px; display: block">
+          <n-text v-if="!compact" depth="3" style="font-size: 12px; margin-top: 6px; display: block">
             悬停此区域可 Ctrl+V 粘贴上传（支持截图/复制图片）
           </n-text>
-          <n-text v-if="!isVisible" depth="3" style="font-size: 12px; margin-top: 6px; display: block">
+          <n-text v-if="!compact && !isVisible" depth="3" style="font-size: 12px; margin-top: 6px; display: block">
             组件不在可视区域时不响应粘贴
           </n-text>
         </div>
@@ -104,6 +104,7 @@ interface Props {
   height?: number
   maxSizeMB?: number
   alt?: string
+  compact?: boolean
 }
 
 interface Emits {
@@ -117,7 +118,8 @@ const props = withDefaults(defineProps<Props>(), {
   width: 400,
   height: 250,
   maxSizeMB: 5,
-  alt: '图片'
+  alt: '图片',
+  compact: false
 })
 
 const emit = defineEmits<Emits>()
