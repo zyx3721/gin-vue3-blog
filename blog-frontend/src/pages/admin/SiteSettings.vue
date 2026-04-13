@@ -63,6 +63,24 @@
           </n-input>
         </n-form-item>
 
+        <n-form-item label="网站成立时间" path="site_start_date">
+          <n-input
+            v-model:value="formData.site_start_date"
+            placeholder="例如：2025-10-13 00:00:00"
+            maxlength="30"
+            clearable
+          >
+            <template #suffix>
+              <n-button text size="tiny" @click="clearField('site_start_date')" type="error">
+                清空
+              </n-button>
+            </template>
+          </n-input>
+          <template #feedback>
+            <span style="font-size: 12px; color: #999;">用于计算网站底部"已运行时间"，格式：YYYY-MM-DD HH:mm:ss，未配置时默认 2025-10-13</span>
+          </template>
+        </n-form-item>
+
         <n-divider />
 
         <n-form-item label="GitHub链接" path="social_github">
@@ -141,39 +159,53 @@
         </n-form-item>
 
         <n-form-item label="QQ二维码" path="social_qq">
-          <n-input
-            v-model:value="formData.social_qq"
-            placeholder="QQ二维码图片URL，例如：https://example.com/qq-qr.png"
-            maxlength="500"
-            clearable
-          >
-            <template #suffix>
-              <n-button text size="tiny" @click="clearField('social_qq')" type="error">
-                清空
-              </n-button>
-            </template>
-          </n-input>
-          <template #feedback>
-            <span style="font-size: 12px; color: #999;">上传QQ二维码图片后，将图片URL填入此处</span>
-          </template>
+          <div style="width: 100%;">
+            <ImageUpload
+              v-model="formData.social_qq"
+              :width="280"
+              :height="160"
+              alt="QQ二维码"
+              compact
+            />
+            <n-input
+              v-model:value="formData.social_qq"
+              placeholder="QQ二维码图片URL，也可通过上方直接上传"
+              maxlength="500"
+              clearable
+              style="margin-top: 8px;"
+            >
+              <template #suffix>
+                <n-button text size="tiny" @click="clearField('social_qq')" type="error">
+                  清空
+                </n-button>
+              </template>
+            </n-input>
+          </div>
         </n-form-item>
 
         <n-form-item label="微信二维码" path="social_wechat">
-          <n-input
-            v-model:value="formData.social_wechat"
-            placeholder="微信二维码图片URL，例如：https://example.com/wechat-qr.png"
-            maxlength="500"
-            clearable
-          >
-            <template #suffix>
-              <n-button text size="tiny" @click="clearField('social_wechat')" type="error">
-                清空
-              </n-button>
-            </template>
-          </n-input>
-          <template #feedback>
-            <span style="font-size: 12px; color: #999;">上传微信二维码图片后，将图片URL填入此处</span>
-          </template>
+          <div style="width: 100%;">
+            <ImageUpload
+              v-model="formData.social_wechat"
+              :width="280"
+              :height="160"
+              alt="微信二维码"
+              compact
+            />
+            <n-input
+              v-model:value="formData.social_wechat"
+              placeholder="微信二维码图片URL，也可通过上方直接上传"
+              maxlength="500"
+              clearable
+              style="margin-top: 8px;"
+            >
+              <template #suffix>
+                <n-button text size="tiny" @click="clearField('social_wechat')" type="error">
+                  清空
+                </n-button>
+              </template>
+            </n-input>
+          </div>
         </n-form-item>
 
         <n-divider />
@@ -315,29 +347,49 @@
         :label-width="isMobile ? 'auto' : '120'"
       >
         <n-form-item label="微信收款码" path="reward_wechat">
-          <n-input
-            v-model:value="formData.reward_wechat"
-            placeholder="微信收款码图片URL"
-            maxlength="500"
-            clearable
-          >
-            <template #suffix>
-              <n-button text size="tiny" @click="clearField('reward_wechat')" type="error">清空</n-button>
-            </template>
-          </n-input>
+          <div style="width: 100%;">
+            <ImageUpload
+              v-model="formData.reward_wechat"
+              :width="280"
+              :height="160"
+              alt="微信收款码"
+              compact
+            />
+            <n-input
+              v-model:value="formData.reward_wechat"
+              placeholder="微信收款码图片URL，也可通过上方直接上传"
+              maxlength="500"
+              clearable
+              style="margin-top: 8px;"
+            >
+              <template #suffix>
+                <n-button text size="tiny" @click="clearField('reward_wechat')" type="error">清空</n-button>
+              </template>
+            </n-input>
+          </div>
         </n-form-item>
 
         <n-form-item label="支付宝收款码" path="reward_alipay">
-          <n-input
-            v-model:value="formData.reward_alipay"
-            placeholder="支付宝收款码图片URL"
-            maxlength="500"
-            clearable
-          >
-            <template #suffix>
-              <n-button text size="tiny" @click="clearField('reward_alipay')" type="error">清空</n-button>
-            </template>
-          </n-input>
+          <div style="width: 100%;">
+            <ImageUpload
+              v-model="formData.reward_alipay"
+              :width="280"
+              :height="160"
+              alt="支付宝收款码"
+              compact
+            />
+            <n-input
+              v-model:value="formData.reward_alipay"
+              placeholder="支付宝收款码图片URL，也可通过上方直接上传"
+              maxlength="500"
+              clearable
+              style="margin-top: 8px;"
+            >
+              <template #suffix>
+                <n-button text size="tiny" @click="clearField('reward_alipay')" type="error">清空</n-button>
+              </template>
+            </n-input>
+          </div>
         </n-form-item>
 
         <n-alert type="info" style="margin-bottom: 16px;">
@@ -350,30 +402,43 @@
       </n-form>
     </n-card>
 
-    <n-card title="设置说明" style="margin-top: 24px;">
-      <n-space vertical>
-        <p><strong>网站名称：</strong>显示在网站底部的名称</p>
-        <p><strong>ICP备案号：</strong>工信部备案号，点击后会跳转到 beian.miit.gov.cn</p>
-        <p><strong>公安备案号：</strong>公安部备案号，点击后会跳转到 www.beian.gov.cn</p>
-        <n-divider />
-        <p><strong>社交链接：</strong>配置个人信息卡片中显示的社交链接（未配置的链接不会显示）</p>
-        <p><strong>GitHub链接：</strong>您的GitHub主页地址</p>
-        <p><strong>Gitee链接：</strong>您的Gitee主页地址</p>
-        <p><strong>邮箱地址：</strong>联系邮箱</p>
-        <p><strong>RSS链接：</strong>RSS订阅地址</p>
-        <p><strong>CSDN链接：</strong>您的CSDN博客主页地址</p>
-        <p><strong>QQ二维码：</strong>QQ二维码图片的URL地址</p>
-        <p><strong>微信二维码：</strong>微信二维码图片的URL地址</p>
-        <p><strong>社交链接排序：</strong>拖拽列表项可调整社交链接的显示顺序，最多显示前5个已配置的链接</p>
-        <n-divider />
-        <p><strong>存储方式：</strong>选择文件上传的存储方式</p>
-        <p><strong>本地存储：</strong>文件保存在服务器本地，适合小型网站或开发环境</p>
-        <p><strong>阿里云 OSS：</strong>文件保存到阿里云对象存储，适合生产环境</p>
-        <p><strong>腾讯云 COS：</strong>文件保存到腾讯云对象存储，适合生产环境</p>
-        <p style="color: #f90; font-size: 13px;">
-          ⚠️ 重要：使用 OSS/COS 存储前，请先在服务器配置文件中填写对应的连接参数（oss 或 cos 节点）
-        </p>
-      </n-space>
+    <!-- 封面设置 -->
+    <n-card title="首页封面设置" style="margin-top: 24px;">
+      <n-form
+        :model="formData"
+        :label-placement="isMobile ? 'top' : 'left'"
+        :label-width="isMobile ? 'auto' : '120'"
+      >
+        <n-form-item label="封面副标题" path="cover_subtitle">
+          <n-input
+            v-model:value="formData.cover_subtitle"
+            type="textarea"
+            placeholder="每行一条副标题，打字机效果轮播显示&#10;例如：&#10;记录技术，分享生活&#10;每一行代码都是一次对话"
+            :autosize="{ minRows: 3, maxRows: 6 }"
+            maxlength="500"
+            show-count
+            clearable
+          />
+        </n-form-item>
+
+        <n-form-item label="封面背景图" path="cover_bg_image">
+          <div style="width: 100%;">
+            <ImageUpload
+              v-model="formData.cover_bg_image"
+              :width="560"
+              :height="200"
+              alt="封面背景图"
+            />
+            <n-text depth="3" style="font-size: 12px; margin-top: 8px; display: block;">
+              建议上传 1920×1080 或更高分辨率的横版图片，未配置时封面使用默认渐变背景
+            </n-text>
+          </div>
+        </n-form-item>
+
+        <n-form-item>
+          <n-button type="primary" @click="handleSubmit" :loading="loading">保存设置</n-button>
+        </n-form-item>
+      </n-form>
     </n-card>
   </div>
 </template>
@@ -382,6 +447,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useMessage, type FormInst } from 'naive-ui'
 import { getSiteSettings, updateSiteSettings, getUploadSettings, updateUploadSettings, getNotificationSettings, updateNotificationSettings } from '@/api/setting'
+import ImageUpload from '@/components/ImageUpload.vue'
 
 const message = useMessage()
 
@@ -401,7 +467,10 @@ const defaultFormData = {
   social_qq: '',
   social_wechat: '',
   reward_wechat: '',
-  reward_alipay: ''
+  reward_alipay: '',
+  cover_subtitle: '',
+  cover_bg_image: '',
+  site_start_date: ''
 }
 
 const formData = ref({
@@ -416,7 +485,10 @@ const formData = ref({
   social_qq: '',
   social_wechat: '',
   reward_wechat: '',
-  reward_alipay: ''
+  reward_alipay: '',
+  cover_subtitle: '',
+  cover_bg_image: '',
+  site_start_date: ''
 })
 
 const uploadFormData = ref({
@@ -566,7 +638,10 @@ async function fetchSettings() {
         social_qq: res.data.social_qq || '',
         social_wechat: res.data.social_wechat || '',
         reward_wechat: res.data.reward_wechat || '',
-        reward_alipay: res.data.reward_alipay || ''
+        reward_alipay: res.data.reward_alipay || '',
+        cover_subtitle: res.data.cover_subtitle || '',
+        cover_bg_image: res.data.cover_bg_image || '',
+        site_start_date: res.data.site_start_date || ''
       }
       
       // 初始化社交链接排序

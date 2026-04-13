@@ -29,6 +29,11 @@ export interface SiteSettings {
   social_link_order?: string   // 社交链接排序顺序，逗号分隔的类型列表，如 "github,gitee,email,rss,csdn,qq,wechat"
   reward_wechat?: string       // 微信收款码图片URL
   reward_alipay?: string       // 支付宝收款码图片URL
+  // 封面设置
+  cover_subtitle?: string      // 封面副标题（多条用换行分隔，打字机效果轮播）
+  cover_bg_image?: string      // 封面背景图URL
+  // 网站运行时间
+  site_start_date?: string     // 网站成立时间（用于计算运行时长）
 }
 
 /**
