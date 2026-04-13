@@ -9,6 +9,11 @@
  -->
 <template>
   <div class="home-page">
+    <!-- 全屏封面 -->
+    <CoverSection :scroll-element="scrollEl" />
+
+    <!-- 主体内容区 -->
+    <div class="home-content">
     <!-- 顶部：贡献热力图（左） + 个人名片（右） -->
     <div class="top-row">
       <div class="calendar-wrapper">
@@ -140,11 +145,12 @@
       </div>
     </div>
     </div>
+    </div><!-- .home-content -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, inject } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useMessage } from 'naive-ui'
 import { TimeOutline, EyeOutline, CreateOutline } from '@vicons/ionicons5'
@@ -160,6 +166,10 @@ import TagCloudWidget from '@/components/TagCloudWidget.vue'
 import CategoryListWidget from '@/components/CategoryListWidget.vue'
 import WebsiteInfoWidget from '@/components/WebsiteInfoWidget.vue'
 import GiteeCalendar from '@/components/GiteeCalendar.vue'
+import CoverSection from '@/components/CoverSection.vue'
+
+// 从 DefaultLayout 注入滚动容器
+const scrollEl = inject<import('vue').Ref<HTMLElement | null>>('layoutScrollEl', ref(null))
 
 const router = useRouter()
 const route = useRoute()
@@ -258,11 +268,20 @@ function getHighlightedSummary(post: Post): string {
 
 <style scoped>
 .home-page {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 20px;
   position: relative;
   z-index: 1;
+}
+
+/* 封面下方的内容区才需要 max-width 和 padding */
+.home-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 20px 0;
+}
+
+/* 封面下方的内容区 */
+.home-content {
+  padding-top: 32px;
 }
 
 .top-row {

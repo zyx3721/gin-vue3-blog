@@ -12,7 +12,11 @@
     <CanvasBackground />
 <n-layout position="absolute">
       <!-- 头部 -->
-      <n-layout-header class="header" :class="{ 'header-hidden': headerHidden }" position="absolute">
+      <n-layout-header
+        class="header"
+        :class="{ 'header-hidden': headerHidden, 'header-transparent': isOnCover }"
+        :style="isOnCover ? { background: 'transparent', backdropFilter: 'none', borderBottom: 'none', boxShadow: 'none' } : {}"
+        position="absolute">
         <div class="header-content">
           <div class="logo" @click="router.push('/')">
             <h2>{{ siteSettings.site_name || defaultSiteName }}</h2>
@@ -73,11 +77,12 @@
       <!-- 主体内容 -->
       <n-layout-content
         ref="mainContentRef"
-        class="main-content"
+        :class="['main-content', { 'main-content-home': route.name === 'Home' }]"
         content-style="padding: 0;"
         :native-scrollbar="false"
+        @scroll="handleNaiveScroll"
       >
-        <div class="content-wrapper">
+        <div class="content-wrapper" :class="{ 'content-wrapper-home': route.name === 'Home' }">
           <router-view />
         </div>
         
@@ -295,7 +300,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, h, onMounted, onBeforeUnmount, reactive, nextTick } from 'vue'
+import { ref, computed, h, onMounted, onBeforeUnmount, reactive, nextTick, provide, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { MoonOutline, SunnyOutline, PersonOutline, LogOutOutline, SettingsOutline, SearchOutline, MenuOutline, HomeOutline, ArchiveOutline, ChatbubblesOutline, ChatboxEllipsesOutline, LinkOutline, InformationCircleOutline, CafeOutline } from '@vicons/ionicons5'
 import { useAuthStore, useAppStore } from '@/stores'
@@ -324,11 +329,12 @@ const siteSettings = ref<SiteSettings>({})
 const defaultSiteName = '菱风叙'
 const runningTime = ref('')
 const copyrightYear = computed(() => {
-  const startYear = siteStartDate.getFullYear()
+  const startYear = siteStartDate.value.getFullYear()
   const currentYear = new Date().getFullYear()
   return currentYear <= startYear ? `${startYear}` : `${startYear}-${currentYear}`
 })
 const headerHidden = ref(false)
+const isOnCover = ref(false)
 const mainContentRef = ref<any>(null) // 取到组件实例后通过 $el 获取真实 DOM
 const scrollEl = ref<HTMLElement | null>(null)
 let lastScrollTop = 0
@@ -368,8 +374,12 @@ const passwordRules: FormRules = {
   ]
 }
 
-// 网站启动时间（可以在这里设置你的网站上线日期）
-const siteStartDate = new Date('2025-10-13 00:00:00')
+// 网站启动时间（优先从后台配置读取，未配置时使用默认值）
+const defaultStartDate = '2025-10-13 00:00:00'
+const siteStartDate = computed(() => {
+  const configured = siteSettings.value.site_start_date
+  return new Date(configured || defaultStartDate)
+})
 
 // 菜单选项（部分菜单根据登录状态动态生成）
 const menuOptions = computed(() => {
@@ -562,7 +572,7 @@ async function fetchSiteSettings() {
 // 计算网站运行时间
 function calculateRunningTime() {
   const now = new Date()
-  const diff = now.getTime() - siteStartDate.getTime()
+  const diff = now.getTime() - siteStartDate.value.getTime()
   
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
@@ -574,20 +584,34 @@ function calculateRunningTime() {
 
 let timer: number | null = null
 
+// 向子路由提供滚动容器引用和封面状态
+provide('layoutScrollEl', scrollEl)
+provide('isOnCover', isOnCover)
+
+// 路由切换时重置封面状态
+watch(() => route.name, (name) => {
+  if (name === 'Home') {
+    isOnCover.value = true
+    headerHidden.value = false
+    // 通过 Naive UI 组件方法滚回顶部
+    mainContentRef.value?.scrollTo({ top: 0 })
+    lastScrollTop = 0
+  } else {
+    isOnCover.value = false
+  }
+})
+
 onMounted(async () => {
   await nextTick()
-  scrollEl.value = getScrollElement()
-  if (scrollEl.value) {
-    scrollEl.value.addEventListener('scroll', handleScroll, { passive: true })
+
+  // 首页初始状态直接设为封面态（未滚动时导航栏透明）
+  if (route.name === 'Home') {
+    isOnCover.value = true
   }
-  window.addEventListener('scroll', handleScroll, { passive: true })
 
   fetchSiteSettings()
   calculateRunningTime()
-  // 每秒更新一次运行时间
   timer = window.setInterval(calculateRunningTime, 1000)
-  
-  // 更新页面标题
   updatePageTitle()
 })
 
@@ -602,33 +626,36 @@ onBeforeUnmount(() => {
   if (timer) {
     clearInterval(timer)
   }
-  if (scrollEl.value) {
-    scrollEl.value.removeEventListener('scroll', handleScroll)
-  }
-  window.removeEventListener('scroll', handleScroll)
 })
 
-function getScrollElement(): HTMLElement | null {
-  const root = (mainContentRef.value as any)?.$el as HTMLElement | undefined
-  if (!root) return null
-  // 当 native-scrollbar=false 时，Naive UI 使用自定义滚动容器
-  const candidates = ['.n-scrollbar-container', '.n-scrollbar-content']
-  for (const selector of candidates) {
-    const el = root.querySelector(selector) as HTMLElement | null
-    if (el) return el
+// Naive UI n-layout-content 的 scroll 回调，直接从事件拿 scrollTop
+function handleNaiveScroll(e: Event) {
+  const target = e.target as HTMLElement
+  if (target) {
+    scrollEl.value = target
   }
-  return root
+  handleScroll()
 }
 
 function handleScroll() {
-  const el = scrollEl.value || getScrollElement()
-  const current = el ? el.scrollTop : window.scrollY || 0
+  const current = scrollEl.value ? scrollEl.value.scrollTop : 0
   const delta = current - lastScrollTop
 
+  // 判断是否在首页封面区域（用于导航栏透明效果）
+  const isHomePage = route.name === 'Home'
+
+  if (isHomePage) {
+    isOnCover.value = current < window.innerHeight * 0.8
+  } else {
+    isOnCover.value = false
+  }
+
+  // 抖动过滤
   if (Math.abs(delta) < 5) {
     return
   }
 
+  // 向下滚动超过 40px 就隐藏导航栏（无论是否在封面区域）
   if (delta > 0 && current > 40) {
     headerHidden.value = true
   } else if (delta < 0) {
@@ -962,13 +989,21 @@ html.dark .logo h2 {
 }
 
 .main-content {
-  padding: 32px 24px 0 24px;
+  padding: 0 24px 0 24px;
   position: relative;
-  z-index: 1;
+  z-index: 2;
   overflow-y: auto;
   height: calc(100vh - 72px);
   transition: transform 0.3s ease, height 0.3s ease;
   transform: translateY(0);
+}
+
+/* 首页去掉左右 padding，让封面可以铺满全宽 */
+.main-content-home {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  height: 100vh !important;
+  margin-top: -72px;
 }
 
 .header + .main-content {
@@ -989,6 +1024,55 @@ html.dark .logo h2 {
   margin: 0 auto;
   min-height: calc(100vh - 72px - 180px);
   padding-bottom: 20px;
+}
+
+/* 首页时去除顶部内边距，让封面紧贴视口顶部，且不限制宽度 */
+.content-wrapper-home {
+  padding-top: 0 !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* 导航栏透明态：封面区域内生效 */
+.header.header-transparent {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  border-bottom-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 穿透 Naive UI 内部元素的背景 */
+.header.header-transparent :deep(.n-layout-header) {
+  background: transparent !important;
+}
+
+.header.header-transparent .logo h2 {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: #fff !important;
+  background-clip: unset !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.header.header-transparent .nav-menu :deep(.n-menu-item-content-header) {
+  color: #fff !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.header.header-transparent .nav-menu :deep(.n-menu-item-content__icon) {
+  color: #fff !important;
+}
+.header.header-transparent .nav-menu :deep(.n-icon) {
+  color: #fff !important;
+}
+.header.header-transparent .nav-menu :deep(.n-menu-item-content::before) {
+  background-color: transparent !important;
+}
+.header.header-transparent .header-actions :deep(.n-button) {
+  color: #fff !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.header.header-transparent .header-actions :deep(.n-icon) {
+  color: #fff !important;
 }
 
 /* 玻璃态底部 - 占满全屏宽度 */
@@ -1258,7 +1342,7 @@ html.dark .running-time :deep(.time-number) {
 }
 
 /* 平板以下显示移动端菜单按钮，隐藏桌面导航 */
-@media (max-width: 768px) {
+@media (max-width: 1150px) {
   .mobile-menu-btn {
     display: inline-flex;
   }
