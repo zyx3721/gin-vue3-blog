@@ -9,7 +9,8 @@
 # 作　　者：無以菱
 # 联系邮箱：huangjing510@126.com
 # 功能描述：博客项目部署管理脚本，支持 build（构建并部署）、start（启动服务）、
-#          stop（停止服务）、status（查看状态）四种操作模式
+#          stop（停止服务）、status（查看状态）四种操作模式。
+#          Gitee 贡献热力图爬取逻辑已内置于后端，无需管理独立服务
 #********************************************************************
 
 # ==================== 颜色定义 ====================
@@ -26,11 +27,9 @@ RESET='\033[0m'
 # ==================== 配置定义 ====================
 PROJECT_ROOT="/web/gin-vue3-blog"
 BACKEND_PORT=8080
-GITEE_API_PORT=8081
 BACKEND_DIR="blog-backend"
 FRONTEND_DIR="blog-frontend"
 BACKEND_BIN="blog-backend"
-GITEE_API_BIN="gitee-calendar-api"
 FRONTEND_MAX_MEMORY=1024  # 前端构建最大内存限制（MB）
 
 # ==================== 日志函数 ====================
@@ -143,41 +142,6 @@ show_usage() {
 }
 
 # ==================== 功能函数 ====================
-# 启动 gitee-calendar-api 服务
-start_gitee_api() {
-    log_step "检查 gitee-calendar-api 服务（端口 $GITEE_API_PORT）"
-    
-    if check_port $GITEE_API_PORT; then
-        local pid=$(get_pid_by_port $GITEE_API_PORT)
-        log_info "gitee-calendar-api 服务已在运行 (PID: $pid)"
-        return 0
-    fi
-    
-    log_warn "gitee-calendar-api 服务未运行，正在启动..."
-    
-    cd "$PROJECT_ROOT" || {
-        log_error "无法进入项目目录: $PROJECT_ROOT"
-        return 1
-    }
-    
-    if [ ! -f "./$GITEE_API_BIN" ]; then
-        log_error "未找到 $GITEE_API_BIN 文件"
-        return 1
-    fi
-    
-    nohup ./$GITEE_API_BIN > gitee-calendar-api.log 2>&1 &
-    sleep 2
-    
-    if check_port $GITEE_API_PORT; then
-        local pid=$(get_pid_by_port $GITEE_API_PORT)
-        log_success "gitee-calendar-api 服务启动成功 (PID: $pid)"
-        return 0
-    else
-        log_error "gitee-calendar-api 服务启动失败，请检查 gitee-calendar-api.log"
-        return 1
-    fi
-}
-
 # 启动后端服务
 start_backend() {
     log_step "检查 Go 后端服务（端口 $BACKEND_PORT）"
@@ -211,20 +175,6 @@ start_backend() {
         log_error "Go 后端服务启动失败，请检查 app.log"
         return 1
     fi
-}
-
-# 停止 gitee-calendar-api 服务
-stop_gitee_api() {
-    log_step "停止 gitee-calendar-api 服务（端口 $GITEE_API_PORT）"
-    
-    if ! check_port $GITEE_API_PORT; then
-        log_info "gitee-calendar-api 服务未运行"
-        return 0
-    fi
-    
-    local pid=$(get_pid_by_port $GITEE_API_PORT)
-    stop_process "$pid" "gitee-calendar-api"
-    return $?
 }
 
 # 停止后端服务
@@ -328,11 +278,7 @@ cmd_build_frontend() {
 cmd_build() {
     log_step "开始重新构建项目..."
     echo ""
-    
-    # 检查并启动 gitee-calendar-api
-    start_gitee_api || exit 1
-    echo ""
-    
+
     # 停止后端服务
     if check_port $BACKEND_PORT; then
         local pid=$(get_pid_by_port $BACKEND_PORT)
@@ -371,11 +317,7 @@ cmd_start() {
     }
     
     local has_error=0
-    
-    # 启动 gitee-calendar-api
-    start_gitee_api || has_error=1
-    echo ""
-    
+
     # 启动后端
     start_backend || has_error=1
     echo ""
@@ -398,11 +340,7 @@ cmd_stop() {
     # 停止后端服务
     stop_backend
     echo ""
-    
-    # 停止 gitee-calendar-api
-    stop_gitee_api
-    echo ""
-    
+
     log_success "所有服务已停止"
 }
 
@@ -421,15 +359,7 @@ cmd_status() {
     else
         printf "${BOLD}│${RESET} %-20s ${RED}○ 已停止${RESET}    端口: %-6s  PID: %-8s ${BOLD}│${RESET}\n" "Go 后端服务" "$BACKEND_PORT" "-"
     fi
-    
-    # 检查 gitee-calendar-api
-    if check_port $GITEE_API_PORT; then
-        local pid=$(get_pid_by_port $GITEE_API_PORT)
-        printf "${BOLD}│${RESET} %-20s ${GREEN}● 运行中${RESET}    端口: %-6s  PID: %-8s ${BOLD}│${RESET}\n" "gitee-calendar-api" "$GITEE_API_PORT" "$pid"
-    else
-        printf "${BOLD}│${RESET} %-20s ${RED}○ 已停止${RESET}    端口: %-6s  PID: %-8s ${BOLD}│${RESET}\n" "gitee-calendar-api" "$GITEE_API_PORT" "-"
-    fi
-    
+
     echo -e "${BOLD}└─────────────────────────────────────────────────────────────┘${RESET}"
 }
 
