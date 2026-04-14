@@ -116,7 +116,8 @@ const groupedPosts = computed(() => {
   position: relative;
   margin-bottom: 48px;
   padding-left: 60px;
-  border-left: 3px solid #0891b2;
+  border-left: 3px solid rgba(8, 145, 178, 0.8);
+  filter: drop-shadow(0 0 4px rgba(8, 145, 178, 0.3));
 }
 
 html.dark .timeline-group {
@@ -136,12 +137,13 @@ html.dark .timeline-group {
   font-weight: 700;
   margin: 0;
   padding-left: 20px;
-  color: #1a202c;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
   display: inline-block;
 }
 
 html.dark .year-title {
-  color: #e5e5e5;
+  color: #fff;
 }
 
 /* 年份标题左侧的横线装饰 */
@@ -153,11 +155,13 @@ html.dark .year-title {
   transform: translateY(-50%);
   width: 30px;
   height: 3px;
-  background: #0891b2;
+  background: rgba(8, 145, 178, 0.8);
+  box-shadow: 0 0 6px rgba(8, 145, 178, 0.4);
 }
 
 html.dark .year-header::before {
-  background: #38bdf8;
+  background: rgba(56, 189, 248, 0.8);
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.4);
 }
 
 /* 文章列表 */
