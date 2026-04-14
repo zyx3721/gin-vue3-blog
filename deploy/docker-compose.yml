@@ -6,7 +6,7 @@
 # 系统用户：wyl
 # 作　　者：無以菱
 # 联系邮箱：huangjing510@126.com
-# 功能描述：生产环境一体化容器编排，单镜像运行 Nginx + blog-backend + gitee-calendar-api，外部依赖 postgres + redis
+# 功能描述：生产环境一体化容器编排，单镜像运行 Nginx + blog-backend，外部依赖 postgres + redis
 #
 # 使用说明：
 #   模式一（新建数据库容器）：保持下方 postgres/redis 服务配置不变，直接 docker compose up -d
@@ -65,7 +65,6 @@ services:
     volumes:
       - ./backend-config:/app/config
       - ./backend-env/.env.config.prod:/app/.env.config.prod:ro
-      #- ./backend-env/.env-gitee-calendar-api:/app/.env-gitee-calendar-api:ro # gitee api访问白名单（可选）
       - ./uploads:/app/uploads
       - ./logs:/var/log/gin-vue3-blog
     environment:
