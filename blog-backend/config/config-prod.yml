@@ -47,10 +47,6 @@ cos:
   secret_key: "xxxxxxx"
   # domain: "https://static.example.com" # 可选，自定义访问域名
 
-# Gitee 贡献热力图 API 配置（生产环境必须通过环境变量 GITEE_CALENDAR_API_URL 配置）
-gitee_calendar:
-  api_url: "http://127.0.0.1:8081/api"  # 默认值，会被环境变量覆盖
-
 # 安全配置
 security:
   # 管理员IP白名单（这些IP将跳过频率限制和黑名单检查）
