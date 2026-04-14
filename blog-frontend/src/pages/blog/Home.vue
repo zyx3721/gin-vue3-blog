@@ -676,5 +676,31 @@ html.dark .post-card:hover {
   justify-content: center;
   margin-top: 8px;
 }
+
+/* 分页器按钮适配背景图 */
+.pagination-wrapper :deep(.n-pagination-item) {
+  background: rgba(0, 0, 0, 0.35) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(10px);
+}
+
+.pagination-wrapper :deep(.n-pagination-item:hover) {
+  background: rgba(0, 0, 0, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #fff !important;
+}
+
+.pagination-wrapper :deep(.n-pagination-item--active) {
+  background: rgba(8, 145, 178, 0.7) !important;
+  border-color: rgba(8, 145, 178, 0.8) !important;
+  color: #fff !important;
+}
+
+.pagination-wrapper :deep(.n-pagination-item--disabled) {
+  background: rgba(0, 0, 0, 0.2) !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
 </style>
 
