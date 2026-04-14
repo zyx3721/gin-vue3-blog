@@ -6,7 +6,7 @@
  * 系统用户：Administrator
  * 作　　者：無以菱
  * 联系邮箱：huangjing510@126.com
- * 功能描述：日历业务逻辑层，提供Gitee贡献热力图数据查询功能，支持Redis缓存
+ * 功能描述：日历业务逻辑层，提供Gitee贡献热力图数据查询功能，支持Redis缓存，内置Gitee主页爬取
  */
 package service
 
@@ -14,12 +14,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"time"
 
-	"blog-backend/config"
 	"blog-backend/db"
+	"blog-backend/logger"
+	"go.uber.org/zap"
 )
 
 // CalendarService 日历业务逻辑层结构体
@@ -62,31 +61,11 @@ func (s *CalendarService) GetGiteeCalendar(username string) (*CalendarResponse, 
 		// 如果解析失败，继续从API获取
 	}
 
-	// 2. 缓存未命中或解析失败，从gitee-calendar-api获取
-	// 优先使用配置的API地址，如果没有配置则使用默认地址
-	baseURL := config.Cfg.GiteeCalendar.APIURL
-	if baseURL == "" {
-		baseURL = "http://127.0.0.1:8081/api"
-	}
-	apiURL := fmt.Sprintf("%s?user=%s", baseURL, username)
-	resp, err := http.Get(apiURL)
+	// 2. 缓存未命中或解析失败，直接爬取Gitee主页
+	logger.Debug("Gitee日历缓存未命中，开始爬取", zap.String("username", username))
+	response, err := ScrapeGiteeCalendar(ctx, username)
 	if err != nil {
-		return nil, fmt.Errorf("请求gitee-calendar-api失败: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("gitee-calendar-api返回错误状态: %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("读取响应失败: %v", err)
-	}
-
-	var response CalendarResponse
-	if err := json.Unmarshal(body, &response); err != nil {
-		return nil, fmt.Errorf("解析响应失败: %v", err)
+		return nil, fmt.Errorf("获取Gitee贡献数据失败: %v", err)
 	}
 
 	// 3. 将数据存入Redis缓存，过期时间20分钟
@@ -95,5 +74,5 @@ func (s *CalendarService) GetGiteeCalendar(username string) (*CalendarResponse, 
 		db.RDB.Set(ctx, cacheKey, string(cacheData), 20*time.Minute)
 	}
 
-	return &response, nil
+	return response, nil
 }
