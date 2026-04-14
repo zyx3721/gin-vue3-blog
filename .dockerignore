@@ -1,0 +1,79 @@
+# ********************************************************************
+# 项目名称：gin-vue3-blog
+# 文件名称：.dockerignore
+# 创建时间：2026-04-14 21:56:13
+#
+# 系统用户：wyl
+# 作　　者：無以菱
+# 联系邮箱：huangjing510@126.com
+# 功能描述：Docker 构建上下文排除规则，减小镜像体积，加快构建速度
+# ********************************************************************
+
+# Git 相关
+.git
+.gitignore
+.gitattributes
+
+# 前端依赖和构建产物
+blog-frontend/node_modules
+blog-frontend/dist
+blog-frontend/.vite
+blog-frontend/.nuxt
+
+# 后端依赖和构建产物
+blog-backend/vendor
+blog-backend/tmp
+
+# 环境变量文件（敏感信息）
+.env
+.env.*
+!.env.example
+deploy/.env
+deploy/.env.*
+!deploy/.env.example
+deploy/backend-env
+
+# 部署数据卷目录
+deploy/PgSqlData
+deploy/redisData
+deploy/uploads
+deploy/logs
+deploy/backend-config
+
+# IDE 配置
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 文档和说明
+README.md
+*.md
+!deploy/docker/README.md
+
+# CI/CD 配置
+.github
+.gitlab-ci.yml
+
+# 测试相关
+*_test.go
+**/*_test.go
+test
+tests
+__tests__
+
+# 日志文件
+*.log
+logs
+
+# 临时文件
+tmp
+temp
+*.tmp
+*.bak
+*.backup.*
