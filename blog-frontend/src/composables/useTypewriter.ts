@@ -45,7 +45,6 @@ export function useTypewriter(
   let charIndex = 0
   let isDeleting = false
   let timer: ReturnType<typeof setTimeout> | null = null
-  let started = false
 
   // 获取当前文本列表
   function getStrings(): string[] {
@@ -102,7 +101,6 @@ export function useTypewriter(
     charIndex = 0
     isDeleting = false
     displayedText.value = ''
-    started = true
     timer = setTimeout(tick, startDelay)
   }
 
