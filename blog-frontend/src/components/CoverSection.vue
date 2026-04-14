@@ -11,21 +11,7 @@
 -->
 <template>
   <section class="cover-section">
-    <!-- 层级0：壁纸背景图 -->
-    <div class="cover-bg" v-if="bgImage">
-      <img
-        :src="bgImage"
-        alt="封面背景"
-        class="cover-bg-img"
-        :class="{ loaded: bgLoaded }"
-        @load="bgLoaded = true"
-        @error="bgLoaded = false; bgImage = ''"
-      />
-    </div>
-    <!-- 无壁纸时的渐变兜底背景 -->
-    <div class="cover-bg-fallback" v-else></div>
-
-    <!-- 层级2：半透明遮罩（确保文字可读） -->
+    <!-- 半透明遮罩（确保文字可读，背景图由 GlobalBackground 提供） -->
     <div class="cover-overlay"></div>
 
     <!-- 层级3：内容区 -->
@@ -57,8 +43,6 @@ const props = defineProps<{
 
 // 站点数据
 const siteName = ref('菱风叙')
-const bgImage = ref('')
-const bgLoaded = ref(false)
 
 // 副标题数据（从后台设置读取，按换行分隔）
 const subtitleRaw = ref('')
@@ -93,7 +77,7 @@ async function fetchSettings() {
 
     siteName.value = res.data.site_name || '菱风叙'
     subtitleRaw.value = res.data.cover_subtitle || ''
-    bgImage.value = res.data.cover_bg_image || ''
+    // 背景图已由 DefaultLayout → appStore.bgImage 全局管理，此处不再加载
   } catch (err) {
     console.error('CoverSection: 获取设置失败', err)
   }
@@ -116,35 +100,6 @@ onMounted(() => {
   justify-content: center;
   overflow: hidden;
   z-index: 0;
-}
-
-/* 壁纸背景图 */
-.cover-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-.cover-bg-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  opacity: 0;
-  transition: opacity 0.8s ease;
-}
-.cover-bg-img.loaded {
-  opacity: 1;
-}
-
-/* 无壁纸时的渐变兜底 */
-.cover-bg-fallback {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 40%, #0c4a6e 70%, #0891b2 100%);
-}
-html.dark .cover-bg-fallback {
-  background: linear-gradient(135deg, #020617 0%, #0f172a 40%, #1e3a5f 70%, #0c4a6e 100%);
 }
 
 /* 半透明遮罩 */
