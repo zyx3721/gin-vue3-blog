@@ -9,6 +9,7 @@
  -->
 <template>
   <div class="default-layout">
+    <GlobalBackground />
     <CanvasBackground />
 <n-layout position="absolute">
       <!-- 头部 -->
@@ -315,6 +316,7 @@ import { formatDate } from '@/utils/format'
 import { highlightKeyword, extractHighlightSnippet } from '@/utils/highlight'
 import type { Post } from '@/types/blog'
 import CanvasBackground from '@/components/CanvasBackground.vue'
+import GlobalBackground from '@/components/GlobalBackground.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -561,6 +563,8 @@ async function fetchSiteSettings() {
     const res = await getPublicSettings()
     if (res.data) {
       siteSettings.value = res.data
+      // 将封面背景图存入全局 store，供 GlobalBackground 和 CoverSection 使用
+      appStore.setBgImage(res.data.cover_bg_image || '')
       // 获取配置后更新页面标题
       updatePageTitle()
     }
@@ -848,16 +852,16 @@ async function handlePasswordSubmit() {
   height: 100vh;
 }
 
-/* 玻璃态顶部导航栏 */
+/* 玻璃态顶部导航栏 — 深色半透明底 + 白色文字（适配全局背景图） */
 .header {
   padding: 0 24px;
   height: 72px;
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid rgba(8, 145, 178, 0.1);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -870,9 +874,9 @@ async function handlePasswordSubmit() {
 }
 
 html.dark .header {
-  background: rgba(15, 23, 42, 0.8);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
 .header-content {
@@ -909,18 +913,13 @@ html.dark .header {
   margin: 0;
   font-size: 26px;
   font-weight: 800;
-  background: linear-gradient(135deg, #0891b2 0%, #059669 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   letter-spacing: -0.02em;
 }
 
 html.dark .logo h2 {
-  background: linear-gradient(135deg, #38bdf8 0%, #4ade80 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #fff;
 }
 
 .nav-menu {
@@ -930,14 +929,28 @@ html.dark .logo h2 {
   min-width: 0;
 }
 
-/* 自定义导航菜单样式 */
+/* 自定义导航菜单样式 — 白色文字 */
 .nav-menu :deep(.n-menu-item) {
   font-weight: 600;
   transition: all 0.3s;
 }
 
-.nav-menu :deep(.n-menu-item:hover) {
-  color: #0891b2;
+.nav-menu :deep(.n-menu-item-content-header) {
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.nav-menu :deep(.n-menu-item-content__icon),
+.nav-menu :deep(.n-icon) {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.nav-menu :deep(.n-menu-item:hover .n-menu-item-content-header) {
+  color: #fff !important;
+}
+
+.nav-menu :deep(.n-menu-item-content::before) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* 确保菜单文字完整显示 */
@@ -986,6 +999,12 @@ html.dark .logo h2 {
 .header-actions :deep(.n-button) {
   font-weight: 600;
   transition: all 0.3s;
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.header-actions :deep(.n-icon) {
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 .main-content {
@@ -1034,7 +1053,7 @@ html.dark .logo h2 {
   margin-right: 0 !important;
 }
 
-/* 导航栏透明态：封面区域内生效 */
+/* 导航栏全透明态：仅在首页封面区域内去掉背景 */
 .header.header-transparent {
   background: transparent !important;
   backdrop-filter: none !important;
@@ -1042,37 +1061,8 @@ html.dark .logo h2 {
   box-shadow: none !important;
 }
 
-/* 穿透 Naive UI 内部元素的背景 */
 .header.header-transparent :deep(.n-layout-header) {
   background: transparent !important;
-}
-
-.header.header-transparent .logo h2 {
-  background: none !important;
-  -webkit-background-clip: unset !important;
-  -webkit-text-fill-color: #fff !important;
-  background-clip: unset !important;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-.header.header-transparent .nav-menu :deep(.n-menu-item-content-header) {
-  color: #fff !important;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-}
-.header.header-transparent .nav-menu :deep(.n-menu-item-content__icon) {
-  color: #fff !important;
-}
-.header.header-transparent .nav-menu :deep(.n-icon) {
-  color: #fff !important;
-}
-.header.header-transparent .nav-menu :deep(.n-menu-item-content::before) {
-  background-color: transparent !important;
-}
-.header.header-transparent .header-actions :deep(.n-button) {
-  color: #fff !important;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-}
-.header.header-transparent .header-actions :deep(.n-icon) {
-  color: #fff !important;
 }
 
 /* 玻璃态底部 - 占满全屏宽度 */
