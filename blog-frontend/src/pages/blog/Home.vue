@@ -195,7 +195,7 @@ watch(() => route.query.keyword, (newKeyword) => {
 }, { immediate: true })
 
 onMounted(() => {
-  blogStore.init()
+  // blogStore.init() 已在 main.ts 中预加载，这里不再重复调用
   // 从URL获取搜索关键词
   if (route.query.keyword) {
     searchKeyword.value = route.query.keyword as string
