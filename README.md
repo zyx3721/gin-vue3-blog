@@ -49,6 +49,12 @@
 
 ![说说](./screenshots/shuoshuo.png)
 
+## 2.8 登陆/注册页面
+
+![登陆](./screenshots/login.png)
+
+![注册](./screenshots/register.png)
+
 
 
 # 三、本地开发快速启动
