@@ -15,6 +15,7 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // Logger 全局日志实例
@@ -26,14 +27,16 @@ var Logger *zap.Logger
 //  2. 根据环境（开发/生产）选择不同的编码器
 //  3. 开发环境使用彩色控制台输出，便于调试
 //  4. 生产环境使用JSON格式输出，便于日志收集和分析
+//  5. 支持日志文件输出，使用lumberjack进行日志轮转
 //
 // 参数:
 //   - level: 日志级别，可选值：debug、info、warn、error，默认为info
 //   - isDev: true表示开发环境（彩色输出），false表示生产环境（JSON格式）
+//   - logFile: 日志文件路径，为空则只输出到控制台
 //
 // 返回:
 //   - error: 初始化失败时返回错误
-func InitLogger(level string, isDev bool) error {
+func InitLogger(level string, isDev bool, logFile string) error {
 	// 设置日志级别
 	var zapLevel zapcore.Level
 	switch level {
@@ -87,11 +90,32 @@ func InitLogger(level string, isDev bool) error {
 		encoder = zapcore.NewJSONEncoder(encoderConfig)
 	}
 
+	// 配置输出目标
+	var writeSyncer zapcore.WriteSyncer
+	if logFile != "" {
+		// 使用lumberjack进行日志轮转
+		lumberJackLogger := &lumberjack.Logger{
+			Filename:   logFile, // 日志文件路径
+			MaxSize:    100,     // 单个日志文件最大大小（MB）
+			MaxBackups: 30,      // 保留旧日志文件的最大个数
+			MaxAge:     90,      // 保留旧日志文件的最大天数
+			Compress:   true,    // 是否压缩旧日志文件
+		}
+		// 同时输出到文件和控制台
+		writeSyncer = zapcore.NewMultiWriteSyncer(
+			zapcore.AddSync(os.Stdout),
+			zapcore.AddSync(lumberJackLogger),
+		)
+	} else {
+		// 仅输出到标准输出
+		writeSyncer = zapcore.AddSync(os.Stdout)
+	}
+
 	// 创建日志核心，将编码器、输出目标和日志级别组合
 	core := zapcore.NewCore(
 		encoder,
-		zapcore.AddSync(os.Stdout), // 输出到标准输出
-		zapLevel,                   // 日志级别
+		writeSyncer, // 输出目标
+		zapLevel,    // 日志级别
 	)
 
 	// 创建Logger实例，添加调用者信息，跳过一层调用栈（避免显示logger包本身的调用）
