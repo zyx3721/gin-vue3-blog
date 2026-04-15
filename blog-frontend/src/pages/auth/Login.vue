@@ -81,7 +81,7 @@ import type { FormInst, FormRules } from 'naive-ui'
 import { useAuthStore } from '@/stores'
 import type { LoginForm } from '@/types/auth'
 import CaptchaInput from '@/components/CaptchaInput.vue'
-import { PersonOutline, LockClosedOutline, ShieldCheckmarkOutline } from '@vicons/ionicons5'
+import { PersonOutline, LockClosedOutline } from '@vicons/ionicons5'
 
 const router = useRouter()
 const route = useRoute()

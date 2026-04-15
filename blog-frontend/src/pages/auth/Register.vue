@@ -99,7 +99,7 @@ import { useAuthStore } from '@/stores'
 import { validateEmail, validateUsername, validatePassword } from '@/utils/validator'
 import type { RegisterForm } from '@/types/auth'
 import { sendRegisterCode, VERIFICATION_CODE_RESEND_SECONDS } from '@/api/auth'
-import { PersonOutline, MailOutline, LockClosedOutline, ShieldCheckmarkOutline } from '@vicons/ionicons5'
+import { PersonOutline, MailOutline, LockClosedOutline } from '@vicons/ionicons5'
 
 const router = useRouter()
 const message = useMessage()
