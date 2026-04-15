@@ -6,7 +6,7 @@
 # 系统用户：root
 # 作　　者：無以菱
 # 联系邮箱：huangjing510@126.com
-# 功能描述：单镜像生产构建，多阶段编译前端与双 Go 服务，运行时使用 Nginx 统一入口并通过 supervisord 管理多进程
+# 功能描述：单镜像生产构建，多阶段编译前端与后端 Go 服务，运行时使用 Nginx 统一入口并通过 supervisord 管理多进程
 #********************************************************************
 
 ############################
@@ -49,19 +49,7 @@ ENV CGO_ENABLED=${CGO_ENABLED}
 RUN go build -o /out/blog-backend ./cmd/server
 
 ############################
-# 3) gitee-calendar-api builder
-############################
-FROM golang:1.25-bookworm AS gitee-builder
-
-WORKDIR /src
-
-# 说明：仓库内当前存在已编译的 gitee-calendar-api 二进制；此处仍选择在 Docker build 阶段重新编译
-# 若后续补充源码目录，可改为 go build 源码；当前先直接复用已有二进制
-COPY gitee-calendar-api /out/gitee-calendar-api
-RUN chmod +x /out/gitee-calendar-api
-
-############################
-# 4) runtime
+# 3) runtime
 ############################
 FROM debian:bookworm-slim AS runtime
 
@@ -77,7 +65,6 @@ WORKDIR /app
 
 # Go 二进制
 COPY --from=blog-backend-builder /out/blog-backend /app/blog-backend
-COPY --from=gitee-builder /out/gitee-calendar-api /app/gitee-calendar-api
 
 # 后端默认配置（生产请通过挂载 /app/config 覆盖）
 COPY blog-backend/config /app/config
@@ -85,16 +72,15 @@ COPY blog-backend/config /app/config
 # 上传目录（生产请通过挂载 /app/uploads 持久化）
 RUN mkdir -p /app/uploads/avatars
 
+# 日志目录（生产请通过挂载 /var/log/gin-vue3-blog 持久化）
+RUN mkdir -p /var/log/gin-vue3-blog
+
 # 前端静态
 COPY --from=frontend-builder /src/blog-frontend/dist /usr/share/nginx/html
 
 # Nginx 配置与 supervisor 配置
 COPY deploy/docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY deploy/docker/supervisord.conf /etc/supervisor/supervisord.conf
-
-# gitee-calendar-api IP 白名单（可选：生产建议挂载覆盖）
-# 说明：该文件可能不存在，因此不在构建期强制 COPY
-# 如需启用，请在 docker run 时通过 -v 挂载到 /app/.env-gitee-calendar-api
 
 EXPOSE 80
 

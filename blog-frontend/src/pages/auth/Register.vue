@@ -9,14 +9,26 @@
  -->
 <template>
   <div class="register-page">
-    <h2>注册</h2>
+    <h2 class="page-title">
+      <span class="gradient-text">创建账号</span>
+    </h2>
+    <p class="page-subtitle">创建账号，开启互动之旅</p>
+
     <n-form ref="formRef" :model="formData" :rules="rules" size="large">
       <n-form-item path="username" label="用户名">
-        <n-input v-model:value="formData.username" placeholder="3-20个字符，字母数字下划线" />
+        <n-input v-model:value="formData.username" placeholder="3-20个字符，字母数字下划线">
+          <template #prefix>
+            <n-icon :component="PersonOutline" />
+          </template>
+        </n-input>
       </n-form-item>
 
       <n-form-item path="email" label="邮箱">
-        <n-input v-model:value="formData.email" placeholder="请输入邮箱" />
+        <n-input v-model:value="formData.email" placeholder="请输入邮箱">
+          <template #prefix>
+            <n-icon :component="MailOutline" />
+          </template>
+        </n-input>
       </n-form-item>
 
       <n-form-item path="code" label="邮箱验证码">
@@ -44,7 +56,11 @@
           type="password"
           show-password-on="click"
           placeholder="至少6个字符"
-        />
+        >
+          <template #prefix>
+            <n-icon :component="LockClosedOutline" />
+          </template>
+        </n-input>
       </n-form-item>
 
       <n-form-item path="confirmPassword" label="确认密码">
@@ -53,7 +69,11 @@
           type="password"
           show-password-on="click"
           placeholder="请再次输入密码"
-        />
+        >
+          <template #prefix>
+            <n-icon :component="LockClosedOutline" />
+          </template>
+        </n-input>
       </n-form-item>
 
       <n-button type="primary" block size="large" :loading="loading" @click="handleRegister">
@@ -79,6 +99,7 @@ import { useAuthStore } from '@/stores'
 import { validateEmail, validateUsername, validatePassword } from '@/utils/validator'
 import type { RegisterForm } from '@/types/auth'
 import { sendRegisterCode, VERIFICATION_CODE_RESEND_SECONDS } from '@/api/auth'
+import { PersonOutline, MailOutline, LockClosedOutline } from '@vicons/ionicons5'
 
 const router = useRouter()
 const message = useMessage()
@@ -215,12 +236,34 @@ onUnmounted(() => {
   padding-bottom: 6px;
 }
 
+.page-title {
+  text-align: center;
+  margin-bottom: 8px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.page-subtitle {
+  text-align: center;
+  margin-bottom: 28px;
+  color: #666;
+  font-size: 14px;
+}
+
+html.dark .page-subtitle {
+  color: #94a3b8;
+}
+
 h2 {
   text-align: center;
   margin-bottom: 20px;
   color: #333;
   font-size: 26px;
   font-weight: 600;
+}
+
+html.dark h2 {
+  color: #e5e5e5;
 }
 
 .code-input-wrapper {
@@ -253,11 +296,11 @@ h2 {
     font-size: 24px;
     margin-bottom: 20px;
   }
-  
+
   .register-page :deep(.n-form-item) {
     margin-bottom: 16px;
   }
-  
+
   .code-input-wrapper .n-button {
     min-width: 100px;
     font-size: 13px;

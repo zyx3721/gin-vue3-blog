@@ -33,7 +33,7 @@ func main() {
 	// 初始化日志
 	// 根据 config.yml 中的 env 判断是否为开发环境
 	isDev := config.Cfg.Env == "dev"
-	if err := logger.InitLogger(config.Cfg.Log.Level, isDev); err != nil {
+	if err := logger.InitLogger(config.Cfg.Log.Level, isDev, config.Cfg.Log.File); err != nil {
 		log.Fatalf("Failed to init logger: %v", err)
 	}
 	defer logger.Sync()

@@ -31,6 +31,7 @@ email:
 # 日志配置（生产环境使用 info 级别，减少日志输出）
 log:
   level: info  # 如需调试可临时改为 debug
+  file: /var/log/gin-vue3-blog/app.log  # 日志文件路径，容器内持久化
 
 # 阿里云 OSS 配置（可选，如果不使用可以留空）
 oss:
@@ -46,10 +47,6 @@ cos:
   secret_id: "xxxxxxx"
   secret_key: "xxxxxxx"
   # domain: "https://static.example.com" # 可选，自定义访问域名
-
-# Gitee 贡献热力图 API 配置（生产环境必须通过环境变量 GITEE_CALENDAR_API_URL 配置）
-gitee_calendar:
-  api_url: "http://127.0.0.1:8081/api"  # 默认值，会被环境变量覆盖
 
 # 安全配置
 security:

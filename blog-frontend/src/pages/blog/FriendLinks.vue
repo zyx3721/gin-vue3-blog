@@ -596,21 +596,23 @@ onMounted(() => {
   font-size: 32px;
   font-weight: 700;
   margin: 0 0 12px 0;
-  color: #1a202c;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 }
 
 html.dark .page-title {
-  color: #e5e5e5;
+  color: #fff;
 }
 
 .page-description {
   font-size: 16px;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
   margin: 0;
 }
 
 html.dark .page-description {
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .empty-container {
@@ -636,21 +638,23 @@ html.dark .page-description {
   font-size: 24px;
   font-weight: 700;
   margin: 0 0 8px 0;
-  color: #1a202c;
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 html.dark .category-title {
-  color: #e5e5e5;
+  color: #fff;
 }
 
 .category-description {
   font-size: 14px;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.75);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
   margin: 0;
 }
 
 html.dark .category-description {
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .empty-category {

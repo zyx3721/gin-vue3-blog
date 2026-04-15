@@ -51,11 +51,6 @@ type Config struct {
 		DB       int    `mapstructure:"db"`       // Redis数据库编号
 	} `mapstructure:"redis"`
 
-	// GiteeCalendar Gitee日历API配置
-	GiteeCalendar struct {
-		APIURL string `mapstructure:"api_url"` // gitee-calendar-api 服务地址
-	} `mapstructure:"gitee_calendar"`
-
 	// JWT JWT令牌配置
 	JWT struct {
 		Secret      string `mapstructure:"secret"`       // JWT密钥
@@ -74,6 +69,7 @@ type Config struct {
 	// Log 日志配置
 	Log struct {
 		Level string `mapstructure:"level"` // 日志级别：debug、info、warn、error
+		File  string `mapstructure:"file"`  // 日志文件路径，为空则只输出到控制台
 	} `mapstructure:"log"`
 
 	// OSS 阿里云OSS对象存储配置
@@ -169,11 +165,6 @@ func loadEnvOverrides(env string) {
 	}
 	if v := os.Getenv("REDIS_PASSWORD"); v != "" {
 		Cfg.Redis.Password = v
-	}
-
-	// Gitee Calendar API配置覆盖
-	if v := os.Getenv("GITEE_CALENDAR_API_URL"); v != "" {
-		Cfg.GiteeCalendar.APIURL = v
 	}
 
 	// JWT配置覆盖

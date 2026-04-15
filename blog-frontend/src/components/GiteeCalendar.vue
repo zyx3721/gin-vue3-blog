@@ -986,30 +986,41 @@ html.dark .months-row {
   width: 12px;
   height: 12px;
   border-radius: 2px;
-  background-color: #ebedf0;
+  background-color: rgba(0, 0, 0, 0.08);
   position: relative;
   cursor: pointer;
   box-sizing: border-box;
-  border: 1px solid transparent;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .cell-empty {
   background-color: transparent !important;
+  border-color: transparent !important;
   cursor: default;
   pointer-events: none;
 }
 
 .cell.l1 {
   background-color: #9be9a8;
+  border-color: rgba(155, 233, 168, 0.3);
 }
 .cell.l2 {
   background-color: #40c463;
+  border-color: rgba(64, 196, 99, 0.3);
 }
 .cell.l3 {
   background-color: #30a14e;
+  border-color: rgba(48, 161, 78, 0.3);
 }
 .cell.l4 {
   background-color: #216e39;
+  border-color: rgba(33, 110, 57, 0.3);
+}
+
+/* 暗色模式空白格子 */
+html.dark .cell:not(.l1):not(.l2):not(.l3):not(.l4):not(.cell-empty) {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.06);
 }
 
 .cell:hover {
@@ -1110,7 +1121,13 @@ html.dark .legend {
   width: 10px;
   height: 10px;
   border-radius: 2px;
-  background-color: #ebedf0;
+  background-color: rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+html.dark .legend-box {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.06);
 }
 
 .legend-box.level-1 {
