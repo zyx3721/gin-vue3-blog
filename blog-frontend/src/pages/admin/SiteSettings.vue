@@ -421,16 +421,17 @@
           />
         </n-form-item>
 
-        <n-form-item label="封面背景图" path="cover_bg_image">
+        <n-form-item label="封面背景图" path="cover_bg_images">
           <div style="width: 100%;">
-            <ImageUpload
-              v-model="formData.cover_bg_image"
-              :width="560"
-              :height="200"
-              alt="封面背景图"
+            <MultiImageUpload
+              v-model="formData.cover_bg_images"
+              :max-count="3"
             />
             <n-text depth="3" style="font-size: 12px; margin-top: 8px; display: block;">
-              建议上传 1920×1080 或更高分辨率的横版图片，未配置时封面使用默认渐变背景
+              建议上传 1920×1080 或更高分辨率的横版图片，最多上传 3 张，每次刷新页面随机显示其中一张
+            </n-text>
+            <n-text depth="3" style="font-size: 12px; color: #f90; display: block; margin-top: 4px;">
+              ⚠️ 未上传时将使用默认背景图
             </n-text>
           </div>
         </n-form-item>
@@ -448,6 +449,7 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useMessage, type FormInst } from 'naive-ui'
 import { getSiteSettings, updateSiteSettings, getUploadSettings, updateUploadSettings, getNotificationSettings, updateNotificationSettings } from '@/api/setting'
 import ImageUpload from '@/components/ImageUpload.vue'
+import MultiImageUpload from '@/components/MultiImageUpload.vue'
 
 const message = useMessage()
 
@@ -469,7 +471,7 @@ const defaultFormData = {
   reward_wechat: '',
   reward_alipay: '',
   cover_subtitle: '',
-  cover_bg_image: '',
+  cover_bg_images: '',
   site_start_date: ''
 }
 
@@ -487,7 +489,7 @@ const formData = ref({
   reward_wechat: '',
   reward_alipay: '',
   cover_subtitle: '',
-  cover_bg_image: '',
+  cover_bg_images: '',
   site_start_date: ''
 })
 
@@ -640,7 +642,7 @@ async function fetchSettings() {
         reward_wechat: res.data.reward_wechat || '',
         reward_alipay: res.data.reward_alipay || '',
         cover_subtitle: res.data.cover_subtitle || '',
-        cover_bg_image: res.data.cover_bg_image || '',
+        cover_bg_images: res.data.cover_bg_images || '',
         site_start_date: res.data.site_start_date || ''
       }
       
