@@ -9,14 +9,22 @@
  -->
 <template>
   <div class="login-page">
-    <h2>登录</h2>
+    <h2 class="page-title">
+      <span class="gradient-text">欢迎回来</span>
+    </h2>
+    <p class="page-subtitle">登录您的账号继续使用</p>
+
     <n-form ref="formRef" :model="formData" :rules="rules" size="large" >
       <n-form-item path="username" label="用户名">
         <n-input
           v-model:value="formData.username"
           placeholder="请输入用户名"
           @keyup.enter="handleLogin"
-        />
+        >
+          <template #prefix>
+            <n-icon :component="PersonOutline" />
+          </template>
+        </n-input>
       </n-form-item>
 
       <n-form-item path="password" label="密码">
@@ -26,7 +34,11 @@
           show-password-on="click"
           placeholder="请输入密码"
           @keyup.enter="handleLogin"
-        />
+        >
+          <template #prefix>
+            <n-icon :component="LockClosedOutline" />
+          </template>
+        </n-input>
       </n-form-item>
 
       <n-form-item path="captcha" label="验证码">
@@ -69,6 +81,7 @@ import type { FormInst, FormRules } from 'naive-ui'
 import { useAuthStore } from '@/stores'
 import type { LoginForm } from '@/types/auth'
 import CaptchaInput from '@/components/CaptchaInput.vue'
+import { PersonOutline, LockClosedOutline, ShieldCheckmarkOutline } from '@vicons/ionicons5'
 
 const router = useRouter()
 const route = useRoute()
@@ -126,8 +139,23 @@ async function handleLogin() {
   margin-bottom: 13px;
 }
 
+.page-title {
+  text-align: center;
+  margin-bottom: 8px;
+  font-size: 28px;
+  font-weight: 700;
+}
 
+.page-subtitle {
+  text-align: center;
+  margin-bottom: 32px;
+  color: #666;
+  font-size: 14px;
+}
 
+html.dark .page-subtitle {
+  color: #94a3b8;
+}
 
 h2 {
   text-align: center;
@@ -135,6 +163,10 @@ h2 {
   color: #333;
   font-size: 26px;
   font-weight: 600;
+}
+
+html.dark h2 {
+  color: #e5e5e5;
 }
 
 .footer-links {
@@ -152,7 +184,7 @@ h2 {
     font-size: 24px;
     margin-bottom: 20px;
   }
-  
+
   .login-page :deep(.n-form-item) {
     margin-bottom: 16px;
   }
