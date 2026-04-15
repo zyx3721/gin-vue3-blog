@@ -6,8 +6,8 @@
   系统用户：Administrator
   作　　者：無以菱
   联系邮箱：huangjing510@126.com
-  功能描述：全局固定背景图组件，从 app store 读取后台配置的背景图 URL，
-           渲染为视口固定层，叠加亮色/暗色半透明遮罩，支持图片预加载淡入。
+  功能描述：全局固定背景图组件，从 app store 读取后台配置的背景图 URL 数组，
+           每次刷新时随机选择一张壁纸渲染为视口固定层，叠加亮色/暗色半透明遮罩，支持图片预加载淡入。
            仅当后台设置了背景图时渲染，未设置时不渲染，由 body CSS 渐变兜底。
 -->
 <template>
@@ -35,8 +35,16 @@ const DEFAULT_BG = '/default_background.png'
 const appStore = useAppStore()
 const imgLoaded = ref(false)
 
-// 优先使用后台配置的背景图，未配置时回退到默认背景图
-const bgSrc = computed(() => appStore.bgImage || DEFAULT_BG)
+// 从 store 中获取背景图数组，随机选择一张
+const bgSrc = computed(() => {
+  const bgImages = appStore.bgImages
+  if (bgImages && bgImages.length > 0) {
+    // 每次刷新时随机选择一张
+    const randomIndex = Math.floor(Math.random() * bgImages.length)
+    return bgImages[randomIndex]
+  }
+  return DEFAULT_BG
+})
 
 // 图片 URL 变化时重置加载状态
 watch(bgSrc, () => {
@@ -46,8 +54,8 @@ watch(bgSrc, () => {
 // 后台图片加载失败时回退到默认图
 function handleImgError() {
   imgLoaded.value = false
-  if (appStore.bgImage) {
-    appStore.setBgImage('')
+  if (appStore.bgImages.length > 0) {
+    appStore.setBgImages([])
   }
 }
 </script>
