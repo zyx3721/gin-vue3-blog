@@ -174,7 +174,6 @@ const scrollEl = inject<import('vue').Ref<HTMLElement | null>>('layoutScrollEl',
 const router = useRouter()
 const route = useRoute()
 const message = useMessage()
-const blogStore = useBlogStore()
 
 const loading = ref(false)
 const posts = ref<Post[]>([])
