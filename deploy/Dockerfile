@@ -72,6 +72,9 @@ COPY blog-backend/config /app/config
 # 上传目录（生产请通过挂载 /app/uploads 持久化）
 RUN mkdir -p /app/uploads/avatars
 
+# 日志目录（生产请通过挂载 /var/log/gin-vue3-blog 持久化）
+RUN mkdir -p /var/log/gin-vue3-blog
+
 # 前端静态
 COPY --from=frontend-builder /src/blog-frontend/dist /usr/share/nginx/html
 
