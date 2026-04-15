@@ -563,8 +563,17 @@ async function fetchSiteSettings() {
     const res = await getPublicSettings()
     if (res.data) {
       siteSettings.value = res.data
-      // 将封面背景图存入全局 store，供 GlobalBackground 和 CoverSection 使用
-      appStore.setBgImage(res.data.cover_bg_image || '')
+      // 将封面背景图数组存入全局 store，供 GlobalBackground 使用
+      let bgImages: string[] = []
+      if (res.data.cover_bg_images) {
+        try {
+          bgImages = JSON.parse(res.data.cover_bg_images)
+        } catch (e) {
+          console.error('解析背景图数组失败:', e)
+          bgImages = []
+        }
+      }
+      appStore.setBgImages(bgImages)
       // 获取配置后更新页面标题
       updatePageTitle()
     }
@@ -1008,7 +1017,7 @@ html.dark .logo h2 {
 }
 
 .main-content {
-  padding: 0 24px 0 24px;
+  padding: 24px 24px 0 24px;
   position: relative;
   z-index: 2;
   overflow-y: auto;
@@ -1019,6 +1028,7 @@ html.dark .logo h2 {
 
 /* 首页去掉左右 padding，让封面可以铺满全宽 */
 .main-content-home {
+  padding-top: 0 !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
   height: 100vh !important;
@@ -1336,47 +1346,47 @@ html.dark .running-time :deep(.time-number) {
   .mobile-menu-btn {
     display: inline-flex;
   }
-  
+
   .desktop-only {
     display: none !important;
   }
-  
+
   .header {
     padding: 0 12px;
     height: 60px;
   }
-  
+
   .logo-image {
     width: 24px;
     height: 24px;
   }
-  
+
   .logo h2 {
     font-size: 20px;
   }
-  
+
   .header-actions {
     gap: 8px;
   }
-  
+
   .main-content {
-    padding: 16px 12px 0 12px;
+    padding: 20px 12px 0 12px;
     height: calc(100vh - 60px);
   }
-  
+
   .content-wrapper {
     min-height: calc(100vh - 60px - 160px);
   }
-  
+
   .footer {
     padding: 16px 12px;
     margin-top: 24px;
   }
-  
+
   .footer-content p {
     font-size: 12px;
   }
-  
+
   .running-time {
     font-size: 11px !important;
   }
