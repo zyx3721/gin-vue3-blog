@@ -24,7 +24,9 @@
 # 二、项目截图
 
 ## 2.1 首页
-![首页](./screenshots/home.png)
+![首页](./screenshots/home1.png)
+
+![首页](./screenshots/home2.png)
 
 ## 2.2 文章详情
 ![文章详情](./screenshots/post-detail.png)
