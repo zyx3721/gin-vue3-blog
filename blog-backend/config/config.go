@@ -69,6 +69,7 @@ type Config struct {
 	// Log 日志配置
 	Log struct {
 		Level string `mapstructure:"level"` // 日志级别：debug、info、warn、error
+		File  string `mapstructure:"file"`  // 日志文件路径，为空则只输出到控制台
 	} `mapstructure:"log"`
 
 	// OSS 阿里云OSS对象存储配置
