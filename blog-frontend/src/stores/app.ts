@@ -20,7 +20,7 @@ export const useAppStore = defineStore(
     const theme = ref<'light' | 'dark'>('light')
     const sidebarCollapsed = ref(false)
     const loading = ref(false)
-    const bgImage = ref('') // 全局背景图 URL（从后台设置获取，不持久化）
+    const bgImages = ref<string[]>([]) // 全局背景图 URL 数组（从后台设置获取，不持久化）
 
     // 切换主题
     function toggleTheme() {
@@ -42,21 +42,21 @@ export const useAppStore = defineStore(
       loading.value = value
     }
 
-    // 设置全局背景图
-    function setBgImage(url: string) {
-      bgImage.value = url
+    // 设置全局背景图数组
+    function setBgImages(urls: string[]) {
+      bgImages.value = urls
     }
 
     return {
       theme,
       sidebarCollapsed,
       loading,
-      bgImage,
+      bgImages,
       toggleTheme,
       setTheme,
       toggleSidebar,
       setLoading,
-      setBgImage
+      setBgImages
     }
   },
   {
