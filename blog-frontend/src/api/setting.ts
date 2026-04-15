@@ -31,7 +31,8 @@ export interface SiteSettings {
   reward_alipay?: string       // 支付宝收款码图片URL
   // 封面设置
   cover_subtitle?: string      // 封面副标题（多条用换行分隔，打字机效果轮播）
-  cover_bg_image?: string      // 封面背景图URL
+  cover_bg_image?: string      // 封面背景图URL（已废弃，保留用于兼容）
+  cover_bg_images?: string     // 封面背景图URL数组（JSON字符串格式，最多3张）
   // 网站运行时间
   site_start_date?: string     // 网站成立时间（用于计算运行时长）
 }
