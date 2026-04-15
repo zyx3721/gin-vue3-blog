@@ -19,8 +19,9 @@ export const useAppStore = defineStore(
     // 状态
     const theme = ref<'light' | 'dark'>('light')
     const sidebarCollapsed = ref(false)
-    const loading = ref(false)
+    const loading = ref(true) // 默认为 true，应用启动时显示加载动画
     const bgImages = ref<string[]>([]) // 全局背景图 URL 数组（从后台设置获取，不持久化）
+    const siteName = ref('') // 网站名称（从后台设置获取，不持久化）
 
     // 切换主题
     function toggleTheme() {
@@ -47,16 +48,23 @@ export const useAppStore = defineStore(
       bgImages.value = urls
     }
 
+    // 设置网站名称
+    function setSiteName(name: string) {
+      siteName.value = name
+    }
+
     return {
       theme,
       sidebarCollapsed,
       loading,
       bgImages,
+      siteName,
       toggleTheme,
       setTheme,
       toggleSidebar,
       setLoading,
-      setBgImages
+      setBgImages,
+      setSiteName
     }
   },
   {
