@@ -622,6 +622,7 @@ onMounted(async () => {
     isOnCover.value = true
   }
 
+  // 配置已在 main.ts 中预加载，这里只需获取即可
   fetchSiteSettings()
   calculateRunningTime()
   timer = window.setInterval(calculateRunningTime, 1000)
