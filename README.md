@@ -270,14 +270,7 @@ pnpm dev
 ### 3.5.1 网站运行时间起始日期修改（可选）
 
 > 场景：更换服务器或迁移部署路径后，希望重置首页底部「本站已平稳运行 X 天」的统计起始时间。
-
-假设线上部署路径为 `/data/myBlog `，可以在服务器上执行以下命令，一键更新前端布局文件中的 `siteStartDate` 为当前时间：
-
-```bash
-sed -i "/^const siteStartDate/c const siteStartDate = new Date('$(date '+%F %T')')" /web/gin-vue3-blog/blog-frontend/src/layouts/DefaultLayout.vue
-```
-
-执行完成后，重新构建并部署前端（或重启前端服务），页面底部显示的「网站已运行天数」会从新的起始时间重新计算。
+可在后台网站设置部分自行更改
 
 ### 3.5.2 更换后端端口（如从 `8080` 改为 `8090`）（可选）
 
