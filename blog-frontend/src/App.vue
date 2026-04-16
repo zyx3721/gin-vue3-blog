@@ -312,5 +312,59 @@ function getParticleStyle(_index: number) {
 .fade-leave-to {
   opacity: 0;
 }
+
+/* 移动端响应式适配 */
+@media (max-width: 768px) {
+  /* 隐藏网站标题 */
+  .site-title {
+    display: none;
+  }
+
+  /* 调整立方体大小 */
+  .cube {
+    width: 60px;
+    height: 60px;
+  }
+
+  .cube-face {
+    width: 60px;
+    height: 60px;
+  }
+
+  .cube-face.front {
+    transform: translateZ(30px);
+  }
+
+  .cube-face.back {
+    transform: rotateY(180deg) translateZ(30px);
+  }
+
+  .cube-face.left {
+    transform: rotateY(-90deg) translateZ(30px);
+  }
+
+  .cube-face.right {
+    transform: rotateY(90deg) translateZ(30px);
+  }
+
+  .cube-face.top {
+    transform: rotateX(90deg) translateZ(30px);
+  }
+
+  .cube-face.bottom {
+    transform: rotateX(-90deg) translateZ(30px);
+  }
+
+  /* 调整加载文字 */
+  .loading-text {
+    font-size: 14px;
+    margin: 30px 0 15px 0;
+  }
+
+  /* 调整进度条 */
+  .progress-bar {
+    width: 150px;
+  }
+}
 </style>
 
