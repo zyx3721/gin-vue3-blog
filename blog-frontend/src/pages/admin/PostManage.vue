@@ -29,87 +29,124 @@
       </n-space>
     </div>
 
-    <!-- 筛选 -->
-    <n-space :vertical="isMobile" style="margin: 16px 0" :wrap="!isMobile">
-      <n-input
-        v-model:value="searchKeyword"
-        placeholder="搜索文章..."
-        clearable
-        :style="{ width: isMobile ? '100%' : '250px' }"
-        @keyup.enter="handleSearch"
-      />
-      <n-select
-        v-model:value="filterCategory"
-        placeholder="分类"
-        clearable
-        :style="{ width: isMobile ? '100%' : '150px' }"
-        :options="categoryOptions"
-        @update:value="handleFilterChange"
-      />
-      <n-select
-        v-model:value="filterStatus"
-        placeholder="状态"
-        clearable
-        :style="{ width: isMobile ? '100%' : '120px' }"
-        :options="statusOptions"
-        @update:value="handleFilterChange"
-      />
-      <n-button :block="isMobile" @click="handleSearch">搜索</n-button>
-    </n-space>
+    <!-- 筛选和视图切换 -->
+    <div class="filter-bar">
+      <n-space :vertical="isMobile" :wrap="!isMobile" style="flex: 1">
+        <n-input
+          v-model:value="searchKeyword"
+          placeholder="搜索文章..."
+          clearable
+          :style="{ width: isMobile ? '100%' : '250px' }"
+          @keyup.enter="handleSearch"
+        />
+        <n-select
+          v-model:value="filterCategory"
+          placeholder="分类"
+          clearable
+          :style="{ width: isMobile ? '100%' : '150px' }"
+          :options="categoryOptions"
+          @update:value="handleFilterChange"
+        />
+        <n-select
+          v-model:value="filterStatus"
+          placeholder="状态"
+          clearable
+          :style="{ width: isMobile ? '100%' : '120px' }"
+          :options="statusOptions"
+          @update:value="handleFilterChange"
+        />
+        <n-button :block="isMobile" @click="handleSearch">搜索</n-button>
+      </n-space>
+
+      <!-- 桌面端视图切换按钮 -->
+      <n-button-group v-if="!isMobile" size="medium">
+        <n-button
+          :type="viewMode === 'table' ? 'primary' : 'default'"
+          @click="switchViewMode('table')"
+        >
+          <template #icon>
+            <n-icon :component="GridOutline" />
+          </template>
+          表格
+        </n-button>
+        <n-button
+          :type="viewMode === 'card' ? 'primary' : 'default'"
+          @click="switchViewMode('card')"
+        >
+          <template #icon>
+            <n-icon :component="AppsOutline" />
+          </template>
+          卡片
+        </n-button>
+      </n-button-group>
+    </div>
 
     <!-- 内容区域 -->
     <div class="content-area">
-      <!-- 移动端列表 -->
-      <div v-if="isMobile" class="card-list">
-        <n-card v-for="post in posts" :key="post.id" class="list-card" size="small">
-          <template #header>
-            <div class="card-title">{{ post.title }}</div>
-          </template>
-          <div class="card-content">
-            <div class="info-item">
-              <span class="label">分类：</span>
-              <n-tag type="info" size="tiny">{{ post.category?.name || '无' }}</n-tag>
+      <!-- 卡片视图（移动端强制使用，桌面端可选） -->
+      <div v-if="isMobile || viewMode === 'card'" class="card-list">
+        <n-card v-for="post in posts" :key="post.id" class="list-card" :size="isMobile ? 'small' : 'medium'">
+          <div class="card-inner">
+            <!-- 卡片内容 -->
+            <div class="card-body">
+              <div class="card-title">{{ post.title }}</div>
+
+              <div class="card-content">
+                <div class="info-item">
+                  <span class="label">分类：</span>
+                  <n-tag type="info" :size="isMobile ? 'tiny' : 'small'">{{ post.category?.name || '无' }}</n-tag>
+                </div>
+                <div class="info-item">
+                  <span class="label">状态：</span>
+                  <n-space size="small">
+                    <n-tag :type="post.status === 1 ? 'success' : 'default'" :size="isMobile ? 'tiny' : 'small'">
+                      {{ post.status === 1 ? '已发布' : '草稿' }}
+                    </n-tag>
+                    <n-tag :type="post.visibility === 1 ? 'success' : 'warning'" :size="isMobile ? 'tiny' : 'small'">
+                      {{ post.visibility === 1 ? '公开' : '私密' }}
+                    </n-tag>
+                  </n-space>
+                </div>
+                <div class="info-item">
+                  <span class="label">浏览：</span>
+                  <span class="value">{{ post.view_count }} 次</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">日期：</span>
+                  <span class="value">{{ formatDate(post.created_at, 'YYYY-MM-DD HH:mm') }}</span>
+                </div>
+              </div>
+
+              <div class="card-actions">
+                <n-space justify="end" size="small">
+                  <n-button :size="isMobile ? 'tiny' : 'small'" @click="handleEdit(post.id)">编辑</n-button>
+                  <n-button
+                    :size="isMobile ? 'tiny' : 'small'"
+                    type="error"
+                    :disabled="!canDeletePost(post)"
+                    @click="handleDelete(post.id)"
+                  >
+                    删除
+                  </n-button>
+                  <n-button :size="isMobile ? 'tiny' : 'small'" type="primary" ghost @click="handleExport(post.id, post.title)">
+                    导出
+                  </n-button>
+                </n-space>
+              </div>
             </div>
-            <div class="info-item">
-              <span class="label">状态：</span>
-              <n-space size="small">
-                <n-tag :type="post.status === 1 ? 'success' : 'default'" size="tiny">
-                  {{ post.status === 1 ? '已发布' : '草稿' }}
-                </n-tag>
-                <n-tag :type="post.visibility === 1 ? 'success' : 'warning'" size="tiny">
-                  {{ post.visibility === 1 ? '公开' : '私密' }}
-                </n-tag>
-              </n-space>
+
+            <!-- 封面图片 -->
+            <div v-if="post.cover" class="card-cover">
+              <img :src="post.cover" :alt="post.title" />
             </div>
-            <div class="info-item">
-              <span class="label">浏览：</span>
-              <span class="value">{{ post.view_count }} 次</span>
-            </div>
-            <div class="info-item">
-              <span class="label">日期：</span>
-              <span class="value">{{ formatDate(post.created_at, 'YYYY-MM-DD HH:mm') }}</span>
+            <div v-else class="card-cover card-cover-placeholder">
+              <n-icon :component="DocumentOutline" :size="isMobile ? 32 : 48" />
             </div>
           </div>
-          <template #footer>
-            <n-space justify="end" size="small">
-              <n-button size="tiny" @click="handleEdit(post.id)">编辑</n-button>
-              <n-button 
-                size="tiny" 
-                type="error" 
-                :disabled="!canDeletePost(post)"
-                @click="handleDelete(post.id)"
-              >
-                删除
-              </n-button>
-              <n-button size="tiny" type="primary" ghost @click="handleExport(post.id, post.title)">
-                导出
-              </n-button>
-            </n-space>
-          </template>
         </n-card>
       </div>
 
-      <!-- 桌面端表格 -->
+      <!-- 桌面端表格视图 -->
       <n-data-table
         v-else
         :columns="columns"
@@ -281,7 +318,7 @@ import { ref, reactive, computed, onMounted, onUnmounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMessage, useDialog, NButton, NTag, NSpace } from 'naive-ui'
 import type { DataTableColumns, FormInst, UploadFileInfo } from 'naive-ui'
-import { AddOutline, DocumentOutline } from '@vicons/ionicons5'
+import { AddOutline, DocumentOutline, GridOutline, AppsOutline } from '@vicons/ionicons5'
 import { getPosts, createPost, deletePost, exportPost } from '@/api/post'
 import { useBlogStore, useAuthStore } from '@/stores'
 import { formatDate } from '@/utils/format'
@@ -308,6 +345,7 @@ const searchKeyword = ref('')
 const filterCategory = ref<number | null>(null)
 const filterStatus = ref<number | null>(null)
 const isMobile = ref(false)
+const viewMode = ref<'table' | 'card'>('table') // 桌面端视图模式：table 表格 / card 卡片
 
 // Markdown上传相关
 const markdownFileList = ref<UploadFileInfo[]>([])
@@ -327,9 +365,36 @@ function checkMobile() {
 function canDeletePost(post: Post): boolean {
   const currentUserRole = authStore.user?.role || 'user'
   const postAuthorRole = post.user?.role || 'user'
-  return currentUserRole === 'super_admin' || 
+  return currentUserRole === 'super_admin' ||
          (currentUserRole === 'admin' && postAuthorRole !== 'super_admin') ||
          (currentUserRole === 'user' && post.user_id === authStore.user?.id)
+}
+
+// 切换视图模式
+function switchViewMode(mode: 'table' | 'card') {
+  viewMode.value = mode
+  saveViewMode(mode)
+}
+
+// 保存视图模式到 localStorage
+function saveViewMode(mode: 'table' | 'card') {
+  try {
+    localStorage.setItem('post-manage-view-mode', mode)
+  } catch (error) {
+    console.error('保存视图模式失败:', error)
+  }
+}
+
+// 加载视图模式从 localStorage
+function loadViewMode() {
+  try {
+    const savedMode = localStorage.getItem('post-manage-view-mode')
+    if (savedMode === 'table' || savedMode === 'card') {
+      viewMode.value = savedMode
+    }
+  } catch (error) {
+    console.error('加载视图模式失败:', error)
+  }
 }
 
 const formData = reactive<PostForm>({
@@ -477,6 +542,7 @@ const rules = {
 
 onMounted(() => {
   checkMobile()
+  loadViewMode() // 加载用户的视图偏好
   window.addEventListener('resize', checkMobile)
   blogStore.init()
   fetchPosts()
@@ -950,6 +1016,16 @@ function handleModalClose() {
   font-size: 24px;
 }
 
+/* 筛选栏样式 */
+.filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
 /* 内容区域 */
 .content-area {
   position: relative;
@@ -982,25 +1058,106 @@ function handleModalClose() {
 
 /* 卡片列表样式 */
 .card-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
   padding: 8px 0;
+}
+
+/* 桌面端：每行两列 */
+@media (min-width: 1101px) {
+  .card-list {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
 }
 
 .list-card {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.list-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.card-inner {
+  display: flex;
+  gap: 16px;
+}
+
+/* 移动端：垂直布局 */
+@media (max-width: 1100px) {
+  .card-inner {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+/* 封面图片 */
+.card-cover {
+  flex-shrink: 0;
+  width: 180px;
+  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-cover-placeholder {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  color: #999;
+}
+
+/* 移动端：封面图片全宽 */
+@media (max-width: 1100px) {
+  .card-cover {
+    width: 100%;
+    height: 160px;
+  }
+}
+
+/* 卡片主体 */
+.card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
 }
 
 .card-title {
   font-weight: 600;
   font-size: 16px;
   line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  margin-bottom: 4px;
 }
 
 .card-content {
-  padding: 8px 0;
+  flex: 1;
+}
+
+.card-actions {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .info-item {
