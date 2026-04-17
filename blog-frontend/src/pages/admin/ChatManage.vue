@@ -12,6 +12,21 @@
     <n-card title="聊天室管理">
       <template #header-extra>
         <n-space>
+          <!-- 视图切换按钮（仅桌面端显示） -->
+          <n-button-group v-if="!isMobile" size="small">
+            <n-button :type="viewMode === 'table' ? 'primary' : 'default'" @click="viewMode = 'table'">
+              <template #icon>
+                <n-icon :component="GridOutline" />
+              </template>
+              表格
+            </n-button>
+            <n-button :type="viewMode === 'card' ? 'primary' : 'default'" @click="viewMode = 'card'">
+              <template #icon>
+                <n-icon :component="AppsOutline" />
+              </template>
+              卡片
+            </n-button>
+          </n-button-group>
           <n-button type="primary" @click="showBroadcastModal = true">
             发送系统广播
           </n-button>
@@ -116,7 +131,7 @@
 
       <!-- 消息列表 -->
       <div class="content-area">
-        <div v-if="isMobile" class="card-list">
+        <div v-if="isMobile || viewMode === 'card'" class="card-list">
           <n-card v-for="msg in messages" :key="msg.id" class="list-card" size="small">
             <template #header>
               <div class="card-header-content">
@@ -238,11 +253,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, h } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, h, watch } from 'vue'
 import {
   NCard,
   NSpace,
   NButton,
+  NButtonGroup,
   NIcon,
   NStatistic,
   NDivider,
@@ -259,10 +275,13 @@ import {
   NEmpty,
   NTag,
   NCheckbox,
+  NSwitch,
+  NPagination,
   useMessage,
   useDialog,
   type DataTableColumns
 } from 'naive-ui'
+import { GridOutline, AppsOutline } from '@vicons/ionicons5'
 import { 
   adminGetMessages, 
   adminDeleteMessage, 
@@ -283,6 +302,7 @@ const dialog = useDialog()
 const messages = ref<ChatMessage[]>([])
 const loading = ref(false)
 const isMobile = ref(false)
+const viewMode = ref<'table' | 'card'>('table')
 const onlineInfo = ref<OnlineInfo>({
   online_count: 0,
   online_users: []
@@ -616,10 +636,17 @@ let onlineInfoTimer: number | null = null
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
+
+  // 从 localStorage 读取视图模式偏好
+  const savedViewMode = localStorage.getItem('chat-manage-view-mode')
+  if (savedViewMode === 'card' || savedViewMode === 'table') {
+    viewMode.value = savedViewMode
+  }
+
   fetchMessages()
   fetchOnlineInfo()
   fetchChatSettingsData()
-  
+
   // 定时刷新在线人数（每10秒）
   onlineInfoTimer = window.setInterval(() => {
     // 只在页面可见时刷新
@@ -627,6 +654,11 @@ onMounted(() => {
       fetchOnlineInfo()
     }
   }, 10000)
+})
+
+// 监听视图模式变化，保存到 localStorage
+watch(viewMode, (newMode) => {
+  localStorage.setItem('chat-manage-view-mode', newMode)
 })
 
 // 组件卸载时清理定时器
