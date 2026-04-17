@@ -12,6 +12,21 @@
     <div class="header">
       <h1>友链管理</h1>
       <n-space v-if="activeTab === 'links'">
+        <!-- 视图切换按钮（仅桌面端显示） -->
+        <n-button-group v-if="!isMobile" size="small">
+          <n-button :type="viewMode === 'table' ? 'primary' : 'default'" @click="viewMode = 'table'">
+            <template #icon>
+              <n-icon :component="GridOutline" />
+            </template>
+            表格
+          </n-button>
+          <n-button :type="viewMode === 'card' ? 'primary' : 'default'" @click="viewMode = 'card'">
+            <template #icon>
+              <n-icon :component="AppsOutline" />
+            </template>
+            卡片
+          </n-button>
+        </n-button-group>
         <n-button :size="isMobile ? 'small' : 'medium'" @click="showMyInfoModal = true">
           <template #icon>
             <n-icon :component="PersonOutline" />
@@ -38,8 +53,8 @@
 
     <n-tabs v-model:value="activeTab" type="line" animated>
       <n-tab-pane name="links" tab="友链管理">
-        <div v-if="isMobile" class="card-list">
-          <n-card v-for="link in friendLinks" :key="link.id" class="list-card" size="small">
+        <div v-if="isMobile || viewMode === 'card'" class="card-list">
+          <n-card v-for="link in friendLinks" :key="link.id" class="list-card" :size="isMobile ? 'small' : 'medium'">
             <template #header>
               <n-space align="center">
                 <n-image v-if="link.icon" :src="link.icon" width="32" height="32" object-fit="cover" style="border-radius: 4px;" />
@@ -65,15 +80,15 @@
               </div>
               <div class="info-item">
                 <span class="label">状态：</span>
-                <n-tag :type="link.status === 1 ? 'success' : 'default'" size="small">
+                <n-tag :type="link.status === 1 ? 'success' : 'default'" :size="isMobile ? 'small' : 'medium'">
                   {{ link.status === 1 ? '启用' : '禁用' }}
                 </n-tag>
               </div>
             </div>
             <template #footer>
               <n-space justify="end">
-                <n-button size="small" @click="handleEdit(link)">编辑</n-button>
-                <n-button size="small" type="error" @click="handleDelete(link.id)">删除</n-button>
+                <n-button :size="isMobile ? 'small' : 'medium'" @click="handleEdit(link)">编辑</n-button>
+                <n-button :size="isMobile ? 'small' : 'medium'" type="error" @click="handleDelete(link.id)">删除</n-button>
               </n-space>
             </template>
           </n-card>
@@ -87,10 +102,10 @@
             />
           </div>
         </div>
-        <n-data-table 
-          v-else
-          :columns="columns" 
-          :data="friendLinks" 
+        <n-data-table
+          v-else-if="viewMode === 'table'"
+          :columns="columns"
+          :data="friendLinks"
           :loading="loading"
           :single-line="false"
           :pagination="pagination"
@@ -300,10 +315,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted, h } from 'vue'
-import { useMessage, useDialog, NButton, NTag, NSpace, NImage } from 'naive-ui'
+import { ref, reactive, computed, onMounted, onUnmounted, h, watch } from 'vue'
+import { useMessage, useDialog, NButton, NButtonGroup, NIcon, NTag, NSpace, NImage } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
-import { AddOutline, PersonOutline } from '@vicons/ionicons5'
+import { AddOutline, PersonOutline, GridOutline, AppsOutline } from '@vicons/ionicons5'
 import { 
   getFriendLinksAdmin, 
   createFriendLink, 
@@ -342,6 +357,7 @@ const friendLinks = ref<FriendLink[]>([])
 const categories = ref<FriendLinkCategory[]>([])
 const editingId = ref<number | null>(null)
 const isMobile = ref(false)
+const viewMode = ref<'table' | 'card'>('table')
 const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -666,8 +682,28 @@ async function handleSubmitMyInfo() {
   }
 }
 
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+
+  // 从 localStorage 读取视图模式偏好
+  const savedViewMode = localStorage.getItem('friendlink-manage-view-mode')
+  if (savedViewMode === 'card' || savedViewMode === 'table') {
+    viewMode.value = savedViewMode
+  }
+
+  fetchFriendLinks()
+  fetchCategories()
+  fetchMyInfo()
+})
+
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
+})
+
+// 监听视图模式变化，保存到 localStorage
+watch(viewMode, (newMode) => {
+  localStorage.setItem('friendlink-manage-view-mode', newMode)
 })
 
 function handlePageChange(page: number) {
