@@ -11,20 +11,42 @@
   <div class="category-manage-page">
     <div class="header">
       <h1>分类管理</h1>
-      <n-button type="primary" :size="isMobile ? 'small' : 'medium'" @click="showModal = true">
-        <template #icon>
-          <n-icon :component="AddOutline" />
-        </template>
-        <span v-if="!isMobile">新建分类</span>
-        <span v-else>新建</span>
-      </n-button>
+      <n-space>
+        <!-- 桌面端视图切换按钮 -->
+        <n-button-group v-if="!isMobile" size="medium">
+          <n-button
+            :type="viewMode === 'table' ? 'primary' : 'default'"
+            @click="switchViewMode('table')"
+          >
+            <template #icon>
+              <n-icon :component="GridOutline" />
+            </template>
+          </n-button>
+          <n-button
+            :type="viewMode === 'card' ? 'primary' : 'default'"
+            @click="switchViewMode('card')"
+          >
+            <template #icon>
+              <n-icon :component="AppsOutline" />
+            </template>
+          </n-button>
+        </n-button-group>
+
+        <n-button type="primary" :size="isMobile ? 'small' : 'medium'" @click="showModal = true">
+          <template #icon>
+            <n-icon :component="AddOutline" />
+          </template>
+          <span v-if="!isMobile">新建分类</span>
+          <span v-else>新建</span>
+        </n-button>
+      </n-space>
     </div>
 
-    <div v-if="isMobile" class="card-list">
-      <n-card v-for="category in categories" :key="category.id" class="list-card" size="small">
+    <div v-if="isMobile || viewMode === 'card'" class="card-list">
+      <n-card v-for="category in categories" :key="category.id" class="list-card" :size="isMobile ? 'small' : 'medium'">
         <template #header>
           <n-space align="center">
-            <n-tag :color="{ color: category.color, textColor: '#fff' }" size="small">
+            <n-tag :color="{ color: category.color, textColor: '#fff' }" :size="isMobile ? 'small' : 'medium'">
               {{ category.name }}
             </n-tag>
           </n-space>
@@ -52,7 +74,7 @@
       </n-card>
     </div>
 
-    <n-data-table 
+    <n-data-table
       v-else
       :columns="columns" 
       :data="categories" 
@@ -106,7 +128,7 @@
 import { ref, reactive, onMounted, onUnmounted, h } from 'vue'
 import { useMessage, useDialog, NButton, NTag, NSpace } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
-import { AddOutline } from '@vicons/ionicons5'
+import { AddOutline, GridOutline, AppsOutline } from '@vicons/ionicons5'
 import { getCategories, createCategory, updateCategory, deleteCategory } from '@/api/category'
 import type { Category, CategoryForm } from '@/types/blog'
 import { DEFAULT_COLORS } from '@/utils/constants'
@@ -120,10 +142,38 @@ const showModal = ref(false)
 const categories = ref<Category[]>([])
 const editingId = ref<number | null>(null)
 const isMobile = ref(false)
+const viewMode = ref<'table' | 'card'>('table') // 桌面端视图模式：table 表格 / card 卡片
 
 // 检测移动设备
 function checkMobile() {
   isMobile.value = window.innerWidth <= 1100
+}
+
+// 切换视图模式
+function switchViewMode(mode: 'table' | 'card') {
+  viewMode.value = mode
+  saveViewMode(mode)
+}
+
+// 保存视图模式到 localStorage
+function saveViewMode(mode: 'table' | 'card') {
+  try {
+    localStorage.setItem('category-manage-view-mode', mode)
+  } catch (error) {
+    console.error('保存视图模式失败:', error)
+  }
+}
+
+// 加载视图模式从 localStorage
+function loadViewMode() {
+  try {
+    const savedMode = localStorage.getItem('category-manage-view-mode')
+    if (savedMode === 'table' || savedMode === 'card') {
+      viewMode.value = savedMode
+    }
+  } catch (error) {
+    console.error('加载视图模式失败:', error)
+  }
 }
 
 const formData = reactive<CategoryForm>({
@@ -180,6 +230,7 @@ const columns: DataTableColumns<Category> = [
 
 onMounted(() => {
   checkMobile()
+  loadViewMode() // 加载用户的视图偏好
   window.addEventListener('resize', checkMobile)
   fetchCategories()
 })
