@@ -11,17 +11,34 @@
   <div class="album-manage-page">
     <div class="header">
       <h1>我的相册</h1>
-      <n-button type="primary" :size="isMobile ? 'small' : 'medium'" @click="handleCreate">
-        <template #icon>
-          <n-icon :component="AddOutline" />
-        </template>
-        <span v-if="!isMobile">新增照片</span>
-        <span v-else>新增</span>
-      </n-button>
+      <n-space>
+        <!-- 视图切换按钮（仅桌面端显示） -->
+        <n-button-group v-if="!isMobile" size="small">
+          <n-button :type="viewMode === 'table' ? 'primary' : 'default'" @click="viewMode = 'table'">
+            <template #icon>
+              <n-icon :component="GridOutline" />
+            </template>
+            表格
+          </n-button>
+          <n-button :type="viewMode === 'card' ? 'primary' : 'default'" @click="viewMode = 'card'">
+            <template #icon>
+              <n-icon :component="AppsOutline" />
+            </template>
+            卡片
+          </n-button>
+        </n-button-group>
+        <n-button type="primary" :size="isMobile ? 'small' : 'medium'" @click="handleCreate">
+          <template #icon>
+            <n-icon :component="AddOutline" />
+          </template>
+          <span v-if="!isMobile">新增照片</span>
+          <span v-else>新增</span>
+        </n-button>
+      </n-space>
     </div>
 
-    <div v-if="isMobile" class="card-list">
-      <n-card v-for="album in albums" :key="album.id" class="list-card" size="small">
+    <div v-if="isMobile || viewMode === 'card'" class="card-list">
+      <n-card v-for="album in albums" :key="album.id" class="list-card" :size="isMobile ? 'small' : 'medium'">
         <template #header>
           <n-space align="center">
             <n-image 
@@ -55,8 +72,8 @@
         </div>
         <template #footer>
           <n-space justify="end">
-            <n-button size="small" @click="handleEdit(album)">编辑</n-button>
-            <n-button size="small" type="error" @click="handleDelete(album.id)">删除</n-button>
+            <n-button :size="isMobile ? 'small' : 'medium'" @click="handleEdit(album)">编辑</n-button>
+            <n-button :size="isMobile ? 'small' : 'medium'" type="error" @click="handleDelete(album.id)">删除</n-button>
           </n-space>
         </template>
       </n-card>
@@ -71,10 +88,10 @@
       </div>
     </div>
 
-    <n-data-table 
-      v-else
-      :columns="columns" 
-      :data="albums" 
+    <n-data-table
+      v-else-if="viewMode === 'table'"
+      :columns="columns"
+      :data="albums"
       :loading="loading"
       :single-line="false"
       :pagination="pagination"
@@ -134,10 +151,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, h } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, watch, h } from 'vue'
 import { useMessage, NSpace, NButton } from 'naive-ui'
 import type { FormInst, DataTableColumns } from 'naive-ui'
-import { AddOutline } from '@vicons/ionicons5'
+import { AddOutline, GridOutline, AppsOutline } from '@vicons/ionicons5'
 import { getAlbums, createAlbum, updateAlbum, deleteAlbum, type Album } from '@/api/album'
 import ImageUpload from '@/components/ImageUpload.vue'
 
@@ -148,6 +165,7 @@ const submitting = ref(false)
 const isMobile = ref(window.innerWidth <= 1100)
 const showModal = ref(false)
 const editingId = ref<number | null>(null)
+const viewMode = ref<'table' | 'card'>('table')
 
 const albums = ref<Album[]>([])
 const pagination = reactive({
@@ -381,10 +399,21 @@ onMounted(() => {
   checkMobile()
   fetchAlbums()
   window.addEventListener('resize', checkMobile)
+
+  // 从 localStorage 读取视图模式偏好
+  const savedViewMode = localStorage.getItem('album-manage-view-mode')
+  if (savedViewMode === 'card' || savedViewMode === 'table') {
+    viewMode.value = savedViewMode
+  }
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
+})
+
+// 监听视图模式变化并保存到 localStorage
+watch(viewMode, (newMode) => {
+  localStorage.setItem('album-manage-view-mode', newMode)
 })
 </script>
 
