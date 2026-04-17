@@ -732,15 +732,28 @@ onBeforeUnmount(() => {
 
 /* 卡片列表样式 */
 .card-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
   padding: 8px 0;
+}
+
+/* 移动端 */
+@media (max-width: 1100px) {
+  .card-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .list-card {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.list-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .card-header-content {
