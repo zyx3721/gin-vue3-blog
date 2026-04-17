@@ -205,34 +205,119 @@ html.dark .markdown-preview :deep(.vuepress-markdown-body a) {
   color: #38bdf8 !important;
 }
 
+/* 日间模式下的引用块样式 */
+.markdown-preview :deep(.vuepress-markdown-body blockquote) {
+  color: #4b5563 !important;
+  border-left: 4px solid #0891b2 !important;
+  background: rgba(8, 145, 178, 0.08) !important;
+  padding: 12px 16px !important;
+  margin: 16px 0 !important;
+  border-radius: 4px !important;
+  font-style: normal !important;
+}
+
+.markdown-preview :deep(.vuepress-markdown-body blockquote p) {
+  margin: 0 !important;
+  color: #4b5563 !important;
+}
+
 /* 暗黑模式下的引用块 */
 html.dark .markdown-preview :deep(.vuepress-markdown-body blockquote) {
   color: #9ca3af !important;
-  border-left-color: rgba(56, 189, 248, 0.5) !important;
+  border-left: 4px solid rgba(56, 189, 248, 0.5) !important;
   background: rgba(56, 189, 248, 0.05) !important;
+  padding: 12px 16px !important;
+  margin: 16px 0 !important;
+  border-radius: 4px !important;
+}
+
+html.dark .markdown-preview :deep(.vuepress-markdown-body blockquote p) {
+  color: #9ca3af !important;
+}
+
+/* 日间模式下的表格样式 */
+.markdown-preview :deep(.vuepress-markdown-body table) {
+  border-collapse: collapse !important;
+  border: 1px solid #e5e7eb !important;
+  width: 100% !important;
+  margin: 16px auto !important;
+  background: #ffffff !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  display: table !important;
+}
+
+.markdown-preview :deep(.vuepress-markdown-body th) {
+  background: #dbeafe !important;
+  color: #1e40af !important;
+  font-weight: 600 !important;
+  padding: 12px 16px !important;
+  text-align: left !important;
+  border: 1px solid #bfdbfe !important;
+  font-size: 14px !important;
+}
+
+.markdown-preview :deep(.vuepress-markdown-body td) {
+  padding: 12px 16px !important;
+  border: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+
+.markdown-preview :deep(.vuepress-markdown-body tr) {
+  background: #ffffff !important;
+  border-top: 1px solid #e5e7eb !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.markdown-preview :deep(.vuepress-markdown-body tbody tr:hover) {
+  background: rgba(8, 145, 178, 0.05) !important;
+}
+
+.markdown-preview :deep(.vuepress-markdown-body tr:nth-child(2n)) {
+  background: #f9fafb !important;
+}
+
+.markdown-preview :deep(.vuepress-markdown-body tbody tr:nth-child(2n):hover) {
+  background: rgba(8, 145, 178, 0.08) !important;
 }
 
 /* 暗黑模式下的表格 */
 html.dark .markdown-preview :deep(.vuepress-markdown-body table) {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-html.dark .markdown-preview :deep(.vuepress-markdown-body th),
-html.dark .markdown-preview :deep(.vuepress-markdown-body td) {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-html.dark .markdown-preview :deep(.vuepress-markdown-body tr) {
-  background: transparent !important;
-  border-top-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-html.dark .markdown-preview :deep(.vuepress-markdown-body tr:nth-child(2n)) {
-  background: rgba(255, 255, 255, 0.02) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  background: rgba(30, 41, 59, 0.6) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
 }
 
 html.dark .markdown-preview :deep(.vuepress-markdown-body th) {
+  background: rgba(56, 189, 248, 0.2) !important;
+  color: #7dd3fc !important;
+  font-weight: 600 !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+}
+
+html.dark .markdown-preview :deep(.vuepress-markdown-body td) {
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #d1d5db !important;
+}
+
+html.dark .markdown-preview :deep(.vuepress-markdown-body tr) {
+  background: rgba(30, 41, 59, 0.4) !important;
+  border-top-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+html.dark .markdown-preview :deep(.vuepress-markdown-body tbody tr:hover) {
+  background: rgba(56, 189, 248, 0.1) !important;
+}
+
+html.dark .markdown-preview :deep(.vuepress-markdown-body tr:nth-child(2n)) {
   background: rgba(255, 255, 255, 0.05) !important;
+}
+
+html.dark .markdown-preview :deep(.vuepress-markdown-body tbody tr:nth-child(2n):hover) {
+  background: rgba(56, 189, 248, 0.15) !important;
 }
 
 /* 暗黑模式下的分隔线 */
