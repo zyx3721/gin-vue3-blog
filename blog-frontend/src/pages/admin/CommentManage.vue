@@ -9,16 +9,33 @@
  -->
 <template>
   <div class="comment-manage-page">
-    <h1 class="page-title">评论管理</h1>
+    <div class="page-header">
+      <h1 class="page-title">评论管理</h1>
+      <!-- 视图切换按钮（仅桌面端显示） -->
+      <n-button-group v-if="!isMobile" size="small" class="view-toggle-group">
+        <n-button :type="viewMode === 'table' ? 'primary' : 'default'" @click="viewMode = 'table'">
+          <template #icon>
+            <n-icon :component="GridOutline" />
+          </template>
+          表格
+        </n-button>
+        <n-button :type="viewMode === 'card' ? 'primary' : 'default'" @click="viewMode = 'card'">
+          <template #icon>
+            <n-icon :component="AppsOutline" />
+          </template>
+          卡片
+        </n-button>
+      </n-button-group>
+    </div>
 
     <!-- 内容区域 -->
     <div class="content-area">
-      <div v-if="isMobile" class="card-list">
-        <n-card v-for="comment in comments" :key="comment.id" class="list-card" size="small">
+      <div v-if="isMobile || viewMode === 'card'" class="card-list">
+        <n-card v-for="comment in comments" :key="comment.id" class="list-card" :size="isMobile ? 'small' : 'medium'">
           <template #header>
             <div class="card-header-content">
               <span class="user-name">{{ comment.user.nickname }}</span>
-              <n-tag :type="comment.status === 1 ? 'success' : 'default'" size="tiny">
+              <n-tag :type="comment.status === 1 ? 'success' : 'default'" :size="isMobile ? 'tiny' : 'small'">
                 {{ comment.status === 1 ? '正常' : '隐藏' }}
               </n-tag>
             </div>
@@ -35,11 +52,11 @@
             </div>
           </div>
           <template #footer>
-            <n-space justify="end" size="small">
-              <n-button size="tiny" @click="handleToggleStatus(comment)">
+            <n-space justify="end" :size="isMobile ? 'small' : 'medium'">
+              <n-button :size="isMobile ? 'tiny' : 'small'" @click="handleToggleStatus(comment)">
                 {{ comment.status === 1 ? '隐藏' : '显示' }}
               </n-button>
-              <n-button size="tiny" type="error" @click="handleDelete(comment.id)">
+              <n-button :size="isMobile ? 'tiny' : 'small'" type="error" @click="handleDelete(comment.id)">
                 删除
               </n-button>
             </n-space>
@@ -48,7 +65,7 @@
       </div>
 
       <n-data-table
-        v-else
+        v-else-if="viewMode === 'table'"
         :columns="columns"
         :data="comments"
         :loading="loading"
@@ -72,9 +89,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, h } from 'vue'
-import { useMessage, useDialog, NButton, NTag, NSpace, NEllipsis } from 'naive-ui'
+import { ref, computed, onMounted, onUnmounted, h, watch } from 'vue'
+import { useMessage, useDialog, NButton, NButtonGroup, NIcon, NTag, NSpace, NEllipsis } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
+import { GridOutline, AppsOutline } from '@vicons/ionicons5'
 import { getAllComments, updateCommentStatus, deleteComment } from '@/api/comment'
 import { formatDate } from '@/utils/format'
 import type { Comment } from '@/types/blog'
@@ -88,6 +106,7 @@ const total = ref(0)
 const currentPage = ref(1)
 const pageSize = 15 // 固定每页显示15条评论
 const isMobile = ref(false)
+const viewMode = ref<'table' | 'card'>('table')
 
 // 检测移动设备
 function checkMobile() {
@@ -176,11 +195,23 @@ const columns: DataTableColumns<Comment> = [
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
+
+  // 从 localStorage 读取视图模式偏好
+  const savedViewMode = localStorage.getItem('comment-manage-view-mode')
+  if (savedViewMode === 'card' || savedViewMode === 'table') {
+    viewMode.value = savedViewMode
+  }
+
   fetchComments()
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
+})
+
+// 监听视图模式变化，保存到 localStorage
+watch(viewMode, (newMode) => {
+  localStorage.setItem('comment-manage-view-mode', newMode)
 })
 
 async function fetchComments() {
@@ -251,9 +282,20 @@ function handleDelete(id: number) {
   position: relative;
 }
 
-.page-title {
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 16px;
+}
+
+.page-title {
+  margin: 0;
   font-size: 24px;
+}
+
+.view-toggle-group {
+  flex-shrink: 0;
 }
 
 /* 内容区域 */
