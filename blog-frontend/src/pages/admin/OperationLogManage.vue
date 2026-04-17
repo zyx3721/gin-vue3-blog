@@ -10,6 +10,22 @@
 <template>
   <div class="operation-log-manage-page">
     <n-card title="操作日志管理">
+      <template #header-extra>
+        <n-button-group v-if="!isMobile" size="small">
+          <n-button :type="viewMode === 'table' ? 'primary' : 'default'" @click="viewMode = 'table'">
+            <template #icon>
+              <n-icon :component="GridOutline" />
+            </template>
+            表格
+          </n-button>
+          <n-button :type="viewMode === 'card' ? 'primary' : 'default'" @click="viewMode = 'card'">
+            <template #icon>
+              <n-icon :component="ListOutline" />
+            </template>
+            卡片
+          </n-button>
+        </n-button-group>
+      </template>
       <n-spin :show="loading">
         <!-- 筛选条件 -->
         <n-form
@@ -68,8 +84,8 @@
         </n-card>
 
         <!-- 数据表格 -->
-        <div v-if="isMobile" class="card-list">
-          <n-card v-for="log in logs" :key="log.id" class="list-card" size="small">
+        <div v-if="isMobile || viewMode === 'card'" class="card-list">
+          <n-card v-for="log in logs" :key="log.id" class="list-card" :size="isMobile ? 'small' : 'medium'">
             <template #header>
               <div class="card-header-content">
                 <div class="header-left">
@@ -118,7 +134,7 @@
         </div>
 
         <n-data-table
-          v-else
+          v-else-if="viewMode === 'table'"
           :columns="columns"
           :data="logs"
           :loading="loading"
@@ -146,9 +162,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, h } from 'vue'
-import { useMessage, useDialog, NButton, NTag, NSpace, NCard, NForm, NFormItem, NSelect, NInput, NPagination, NSpin, NText, NCheckbox } from 'naive-ui'
+import { ref, computed, onMounted, onUnmounted, watch, h } from 'vue'
+import { useMessage, useDialog, NButton, NTag, NSpace, NCard, NForm, NFormItem, NSelect, NInput, NPagination, NSpin, NText, NCheckbox, NIcon, NButtonGroup } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
+import { GridOutline, ListOutline } from '@vicons/ionicons5'
 import { getOperationLogs, deleteOperationLog, batchDeleteOperationLogs } from '@/api/operationLog'
 import type { OperationLog, OperationLogParams } from '@/api/operationLog'
 import { formatDate } from '@/utils/format'
@@ -162,6 +179,7 @@ const total = ref(0)
 const currentPage = ref(1)
 const pageSize = 15
 const isMobile = ref(false)
+const viewMode = ref<'table' | 'card'>('table')
 const selectedRowKeys = ref<number[]>([])
 
 const filterForm = ref<OperationLogParams>({
@@ -444,11 +462,23 @@ function handleBatchDelete() {
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
+
+  // 从 localStorage 读取视图模式
+  const savedViewMode = localStorage.getItem('operation-log-manage-view-mode')
+  if (savedViewMode === 'card' || savedViewMode === 'table') {
+    viewMode.value = savedViewMode
+  }
+
   fetchLogs()
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
+})
+
+// 监听视图模式变化并保存到 localStorage
+watch(viewMode, (newMode) => {
+  localStorage.setItem('operation-log-manage-view-mode', newMode)
 })
 </script>
 
