@@ -293,9 +293,8 @@ func (s *PostService) Update(id, userID uint, role string, req *UpdatePostReques
 	if req.Summary != "" {
 		post.Summary = req.Summary
 	}
-	if req.Cover != "" {
-		post.Cover = req.Cover
-	}
+	// 允许设置空字符串来删除封面
+	post.Cover = req.Cover
 	if req.CategoryID != nil {
 		// 检查新分类是否存在
 		if _, err := s.categoryRepo.GetByID(*req.CategoryID); err != nil {
