@@ -11,6 +11,7 @@
 package router
 
 import (
+	"blog-backend/config"
 	"blog-backend/constant"
 	"blog-backend/handler"
 	"blog-backend/middleware"
@@ -49,9 +50,12 @@ func SetupRouter() *gin.Engine {
 	chatHub := service.NewHub()
 	go chatHub.Run() // 启动Hub，在后台goroutine中运行
 
+	// 初始化订阅服务（需要先初始化，因为postHandler依赖它）
+	subscriberService := service.NewSubscriberService(config.Cfg)
+
 	// 初始化所有业务处理器
 	authHandler := handler.NewAuthHandler()
-	postHandler := handler.NewPostHandler()
+	postHandler := handler.NewPostHandler(subscriberService)
 	categoryHandler := handler.NewCategoryHandler()
 	tagHandler := handler.NewTagHandler()
 	commentHandler := handler.NewCommentHandler()
@@ -71,6 +75,7 @@ func SetupRouter() *gin.Engine {
 	calendarHandler := handler.NewCalendarHandler()
 	albumHandler := handler.NewAlbumHandler()
 	operationLogHandler := handler.NewOperationLogHandler()
+	subscriberHandler := handler.NewSubscriberHandler(config.Cfg)
 
 	// 健康检查接口（用于服务监控和负载均衡器健康检查）
 	r.GET("/health", func(c *gin.Context) {
@@ -93,7 +98,8 @@ func SetupRouter() *gin.Engine {
 		setupSettingRoutes(api, settingHandler)                                                                                                                                                                                           // 系统设置路由
 		setupMomentRoutes(api, momentHandler)                                                                                                                                                                                             // 说说路由
 		setupChatRoutes(api, chatHandler)                                                                                                                                                                                                 // 聊天室路由
-		setupAdminRoutes(api, userHandler, postHandler, commentHandler, dashboardHandler, momentHandler, ipBlacklistHandler, ipWhitelistHandler, chatHandler, friendLinkHandler, friendLinkCategoryHandler, settingHandler, albumHandler, operationLogHandler) // 管理后台路由
+		setupSubscriberRoutes(api, subscriberHandler)                                                                                                                                                                                     // 邮件订阅路由
+		setupAdminRoutes(api, userHandler, postHandler, commentHandler, dashboardHandler, momentHandler, ipBlacklistHandler, ipWhitelistHandler, chatHandler, friendLinkHandler, friendLinkCategoryHandler, settingHandler, albumHandler, operationLogHandler, subscriberHandler) // 管理后台路由
 	}
 
 	return r
@@ -386,7 +392,8 @@ func setupChatRoutes(api *gin.RouterGroup, h *handler.ChatHandler) {
 //   - settingHandler: 系统设置处理器实例
 //   - albumHandler: 相册处理器实例
 //   - operationLogHandler: 操作日志处理器实例
-func setupAdminRoutes(api *gin.RouterGroup, userHandler *handler.UserHandler, postHandler *handler.PostHandler, commentHandler *handler.CommentHandler, dashboardHandler *handler.DashboardHandler, momentHandler *handler.MomentHandler, ipBlacklistHandler *handler.IPBlacklistHandler, ipWhitelistHandler *handler.IPWhitelistHandler, chatHandler *handler.ChatHandler, friendLinkHandler *handler.FriendLinkHandler, friendLinkCategoryHandler *handler.FriendLinkCategoryHandler, settingHandler *handler.SettingHandler, albumHandler *handler.AlbumHandler, operationLogHandler *handler.OperationLogHandler) {
+//   - subscriberHandler: 订阅者处理器实例
+func setupAdminRoutes(api *gin.RouterGroup, userHandler *handler.UserHandler, postHandler *handler.PostHandler, commentHandler *handler.CommentHandler, dashboardHandler *handler.DashboardHandler, momentHandler *handler.MomentHandler, ipBlacklistHandler *handler.IPBlacklistHandler, ipWhitelistHandler *handler.IPWhitelistHandler, chatHandler *handler.ChatHandler, friendLinkHandler *handler.FriendLinkHandler, friendLinkCategoryHandler *handler.FriendLinkCategoryHandler, settingHandler *handler.SettingHandler, albumHandler *handler.AlbumHandler, operationLogHandler *handler.OperationLogHandler, subscriberHandler *handler.SubscriberHandler) {
 	admin := api.Group("/admin")
 	// admin 路由基础权限：admin 或 super_admin
 	admin.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware())
@@ -480,5 +487,26 @@ func setupAdminRoutes(api *gin.RouterGroup, userHandler *handler.UserHandler, po
 			operationLogs.DELETE("/:id", operationLogHandler.Delete)
 			operationLogs.POST("/batch-delete", operationLogHandler.DeleteBatch)
 		}
+
+		// 订阅者管理（仅超级管理员）
+		subscribers := admin.Group("/subscribers")
+		subscribers.Use(middleware.RoleRequiredMiddleware(constant.RoleSuperAdmin))
+		{
+			subscribers.GET("", subscriberHandler.List)
+			subscribers.DELETE("/:id", subscriberHandler.Delete)
+		}
+	}
+}
+
+// setupSubscriberRoutes 配置邮件订阅路由
+// 功能说明：配置邮件订阅和退订的公开接口
+// 参数:
+//   - api: API路由组
+//   - h: 订阅者处理器实例
+func setupSubscriberRoutes(api *gin.RouterGroup, h *handler.SubscriberHandler) {
+	subscribe := api.Group("/subscribe")
+	{
+		subscribe.POST("", h.Subscribe)           // 订阅
+		subscribe.GET("/unsubscribe", h.Unsubscribe) // 退订
 	}
 }
