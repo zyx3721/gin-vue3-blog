@@ -144,8 +144,8 @@ func (h *TagHandler) GetPostsByTag(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
 
-	// 使用 PostService 获取文章列表
-	postService := service.NewPostService()
+	// 使用 PostService 获取文章列表（不需要邮件推送功能，传nil）
+	postService := service.NewPostService(nil)
 	posts, total, err := postService.GetByTag(uint(tagID), page, pageSize)
 	if err != nil {
 		util.ServerError(c, "获取文章列表失败")
