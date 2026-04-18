@@ -212,6 +212,7 @@ vim .env.config.dev
 # REDIS_PASSWORD=安全的redis密码
 # JWT_SECRET=更复杂的JWT密钥
 # EMAIL_PASSWORD=邮箱授权码
+# BLOG_URL=http://localhost:3000  # 博客前台地址（邮件订阅功能需要，可选）
 
 # （3）邮箱服务配置（用于密码重置，填写到对应配置文件）
 # email:
@@ -221,6 +222,12 @@ vim .env.config.dev
 #   password: your-auth-code  # QQ邮箱授权码
 #   from_name: 菱风叙
 ```
+
+> **重要配置说明**：
+> - `BLOG_URL`：博客前台地址,用于邮件订阅功能中的退订链接和文章链接(**可选配置,仅使用邮件订阅功能时需要**)
+> - 开发环境：`http://localhost:3000`
+> - 生产环境：必须配置为实际域名（如 `https://your-domain.com`）
+> - 如不使用邮件订阅功能,可以不配置此项,不影响其他功能
 
 3. 配置 Gitee 贡献热力图（可选）：
 
