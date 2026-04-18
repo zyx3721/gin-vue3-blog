@@ -1,5 +1,6 @@
 app:
   port: 8080
+  blog_url: "http://localhost:3000"  # 博客前台地址
 server:
   mode: release
 
