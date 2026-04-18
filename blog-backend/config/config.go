@@ -25,7 +25,8 @@ type Config struct {
 
 	// App 应用基础配置
 	App struct {
-		Port int `mapstructure:"port"` // 应用端口号
+		Port    int    `mapstructure:"port"`     // 应用端口号
+		BlogURL string `mapstructure:"blog_url"` // 博客前台地址
 	} `mapstructure:"app"`
 
 	// Server 服务器配置
@@ -134,6 +135,11 @@ func loadEnvOverrides(env string) {
 	// 尝试加载同级目录下的 .env.config.<env> 文件（不存在则忽略）
 	// 例如：.env.config.dev 或 .env.config.prod
 	_ = gotenv.Load(".env.config." + env)
+
+	// 应用配置覆盖
+	if v := os.Getenv("BLOG_URL"); v != "" {
+		Cfg.App.BlogURL = v
+	}
 
 	// 数据库配置覆盖
 	if v := os.Getenv("DB_HOST"); v != "" {
