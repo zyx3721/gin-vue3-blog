@@ -196,7 +196,24 @@ func (s *PostService) Create(userID uint, req *CreatePostRequest) (*model.Post, 
 		db.RDB.Del(ctx, "tag:stats:top10")
 	}()
 
-	return s.postRepo.GetByID(post.ID)
+	// 获取完整文章信息（用于邮件通知）
+	createdPost, err := s.postRepo.GetByID(post.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 如果文章为发布状态，向订阅者发送邮件通知
+	if req.Status == 1 && s.subscriberService != nil {
+		go func() {
+			ctx := context.Background()
+			if err := s.subscriberService.SendArticleNotification(ctx, createdPost); err != nil {
+				// 记录错误但不影响文章创建
+				fmt.Printf("发送新文章通知失败: %v\n", err)
+			}
+		}()
+	}
+
+	return createdPost, nil
 }
 
 // GetByID 获取文章详情（含权限校验）
