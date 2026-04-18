@@ -1,5 +1,6 @@
 app:
   port: 8080
+  blog_url: "https://huangjingblog.cn"  # 博客前台地址（生产环境请修改为实际域名）
 server:
   mode: release
 
