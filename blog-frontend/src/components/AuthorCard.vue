@@ -561,7 +561,7 @@ html.dark .social-icon.disabled {
 }
 
 .subscribe-button {
-  margin-top: 20px;
+  margin-top: 0px;
   margin-bottom: 20px;
   background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
   border: none;
@@ -573,8 +573,10 @@ html.dark .social-icon.disabled {
   position: relative;
   overflow: hidden;
   isolation: isolate;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* 渐变背景层 */
 .subscribe-button::before {
   content: '';
   position: absolute;
@@ -583,12 +585,52 @@ html.dark .social-icon.disabled {
   bottom: 0;
   width: 0;
   background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: -1;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .subscribe-button:hover::before {
-  width: 100%;
+  animation: fillWithBounce 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes fillWithBounce {
+  0% {
+    width: 0;
+  }
+  70% {
+    width: 100%;
+  }
+  85% {
+    width: 93.33%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+.subscribe-button:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 8px rgba(8, 145, 178, 0.25);
+}
+
+/* 图标动画 */
+.subscribe-button:hover :deep(.n-icon) {
+  animation: mailBounce 0.6s ease;
+}
+
+@keyframes mailBounce {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-4px) rotate(-5deg);
+  }
+  50% {
+    transform: translateY(0) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-2px) rotate(3deg);
+  }
 }
 
 html.dark .subscribe-button {
