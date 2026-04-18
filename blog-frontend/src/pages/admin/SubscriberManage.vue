@@ -92,11 +92,19 @@ import { GridOutline, AppsOutline } from '@vicons/ionicons5'
 import request from '@/utils/request'
 import { formatDate } from '@/utils/format'
 
+interface Subscriber {
+  id: number
+  email: string
+  is_active: boolean
+  subscribed_at: string
+  unsubscribed_at?: string
+}
+
 const message = useMessage()
 const dialog = useDialog()
 
 const loading = ref(false)
-const subscribers = ref([])
+const subscribers = ref<Subscriber[]>([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -119,7 +127,7 @@ const getSubscribers = async (page = 1) => {
     })
     subscribers.value = response.data.list || []
     total.value = response.data.total || 0
-  } catch (error) {
+  } catch (error: any) {
     message.error(error?.message || '获取订阅者列表失败')
   } finally {
     loading.value = false
@@ -135,7 +143,7 @@ const deleteSubscriber = async (id: number) => {
     })
     message.success('删除成功')
     await getSubscribers(currentPage.value)
-  } catch (error) {
+  } catch (error: any) {
     message.error(error?.message || '删除失败')
   }
 }
