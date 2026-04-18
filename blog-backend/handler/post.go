@@ -32,9 +32,9 @@ type PostHandler struct {
 }
 
 // NewPostHandler 创建文章处理器实例
-func NewPostHandler() *PostHandler {
+func NewPostHandler(subscriberService *service.SubscriberService) *PostHandler {
 	return &PostHandler{
-		service: service.NewPostService(),
+		service: service.NewPostService(subscriberService),
 	}
 }
 
@@ -161,7 +161,7 @@ func (h *PostHandler) Delete(c *gin.Context) {
 	role, _ := c.Get("role")
 
 	// 先获取文章信息用于日志记录
-	postService := service.NewPostService()
+	postService := service.NewPostService(nil)
 	uid := userID.(uint)
 	post, _ := postService.GetByID(uint(id), &uid, role.(string), util.GetClientIP(c))
 	var postTitle string
