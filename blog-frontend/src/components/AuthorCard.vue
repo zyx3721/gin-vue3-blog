@@ -50,6 +50,20 @@
         </div>
       </div>
 
+      <!-- 订阅本站按钮 -->
+      <n-button
+        type="primary"
+        block
+        size="large"
+        class="subscribe-button"
+        @click="goToSubscribe"
+      >
+        <template #icon>
+          <n-icon :component="MailOutline" />
+        </template>
+        订阅本站
+      </n-button>
+
       <!-- 社交链接（最多展示 5 个） -->
       <div v-if="visibleSocialLinks.length" class="social-links">
         <template v-for="link in visibleSocialLinks" :key="link.type">
@@ -140,6 +154,8 @@ import { getAuthorProfile, type AuthorProfile } from '@/api/blog'
 import { getPublicSettings } from '@/api/setting'
 import type { SiteSettings } from '@/api/setting'
 import SocialIcons from './SocialIcons.vue'
+import { NIcon } from 'naive-ui'
+import { MailOutline } from '@vicons/ionicons5'
 
 const MAX_SOCIAL_LINKS = 5
 type SocialLinkType = 'github' | 'gitee' | 'email' | 'rss' | 'csdn' | 'qq' | 'wechat'
@@ -232,6 +248,11 @@ function goToCategories() {
 // 跳转到关于我页面
 function goToAbout() {
   router.push('/about')
+}
+
+// 跳转到订阅页面
+function goToSubscribe() {
+  router.push('/subscribe')
 }
 
 // 获取博主信息
@@ -537,6 +558,46 @@ html.dark .social-icon.disabled {
 
 .social-icon.csdn {
   background: #FC5531;
+}
+
+.subscribe-button {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+  border: none;
+  font-weight: 600;
+  height: 44px;
+  font-size: 15px;
+  border-radius: 22px;
+  box-shadow: 0 2px 8px rgba(8, 145, 178, 0.25);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.subscribe-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
+}
+
+.subscribe-button:hover::before {
+  width: 100%;
+}
+
+html.dark .subscribe-button {
+  background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+  box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+}
+
+html.dark .subscribe-button:hover {
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
 }
 
 /* 移动端适配 */
