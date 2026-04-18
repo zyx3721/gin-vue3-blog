@@ -361,3 +361,21 @@ type Album struct {
 func (Album) TableName() string {
 	return "albums"
 }
+
+// Subscriber 邮件订阅者模型
+// 功能说明：存储邮件订阅者信息，支持订阅和退订功能
+type Subscriber struct {
+	ID             uint       `json:"id" gorm:"primaryKey"`
+	Email          string     `json:"email" gorm:"uniqueIndex;not null;size:255"`
+	Token          string     `json:"-" gorm:"uniqueIndex;size:64"` // 退订令牌
+	IsActive       bool       `json:"is_active" gorm:"default:true;index"`
+	SubscribedAt   *time.Time `json:"subscribed_at"`
+	UnsubscribedAt *time.Time `json:"unsubscribed_at"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
+}
+
+// TableName 指定Subscriber模型的数据库表名
+func (Subscriber) TableName() string {
+	return "subscribers"
+}
