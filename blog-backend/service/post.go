@@ -29,19 +29,21 @@ import (
 
 // PostService 文章业务逻辑层结构体
 type PostService struct {
-	postRepo     *repository.PostRepository
-	categoryRepo *repository.CategoryRepository
-	tagRepo      *repository.TagRepository
-	postViewRepo *repository.PostViewRepository
+	postRepo          *repository.PostRepository
+	categoryRepo      *repository.CategoryRepository
+	tagRepo           *repository.TagRepository
+	postViewRepo      *repository.PostViewRepository
+	subscriberService *SubscriberService
 }
 
 // NewPostService 创建文章业务逻辑层实例
-func NewPostService() *PostService {
+func NewPostService(subscriberService *SubscriberService) *PostService {
 	return &PostService{
-		postRepo:     repository.NewPostRepository(),
-		categoryRepo: repository.NewCategoryRepository(),
-		tagRepo:      repository.NewTagRepository(),
-		postViewRepo: repository.NewPostViewRepository(),
+		postRepo:          repository.NewPostRepository(),
+		categoryRepo:      repository.NewCategoryRepository(),
+		tagRepo:           repository.NewTagRepository(),
+		postViewRepo:      repository.NewPostViewRepository(),
+		subscriberService: subscriberService,
 	}
 }
 
@@ -443,6 +445,17 @@ func (s *PostService) Update(id, userID uint, role string, req *UpdatePostReques
 		db.RDB.Del(ctx, "blog:author_profile")
 		db.RDB.Del(ctx, "tag:stats:top10")
 	}()
+
+	// 如果文章从草稿变为发布状态，向订阅者发送邮件通知
+	if oldStatus == 0 && req.Status == 1 && s.subscriberService != nil {
+		go func() {
+			ctx := context.Background()
+			if err := s.subscriberService.SendArticleNotification(ctx, post); err != nil {
+				// 记录错误但不影响文章更新
+				fmt.Printf("发送新文章通知失败: %v\n", err)
+			}
+		}()
+	}
 
 	return s.postRepo.GetByID(post.ID)
 }
