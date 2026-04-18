@@ -339,7 +339,13 @@ function getHighlightedSummary(post: Post): string {
 
 .posts-section {
   min-width: 0; /* 防止内容溢出 */
-  margin-top: -95px; /* 向上移动文章列表，缩小与热力图的间隙 */
+}
+
+/* 桌面端：向上移动文章列表，缩小与热力图的间隙 */
+@media (min-width: 1025px) {
+  .posts-section {
+    margin-top: -95px;
+  }
 }
 
 .sidebar-section {
