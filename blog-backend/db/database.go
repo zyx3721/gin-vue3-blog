@@ -15,6 +15,7 @@ import (
 
 	"blog-backend/config"
 	blogLogger "blog-backend/logger"
+	"blog-backend/model"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -52,6 +53,11 @@ func InitDB() error {
 
 	if err != nil {
 		return err
+	}
+
+	// 自动迁移数据库表结构
+	if err := DB.AutoMigrate(&model.Subscriber{}); err != nil {
+		blogLogger.Warn(fmt.Sprintf("Failed to migrate Subscriber table: %v", err))
 	}
 
 	// 连接成功，记录日志
