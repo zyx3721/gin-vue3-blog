@@ -295,6 +295,7 @@ function getHighlightedSummary(post: Post): string {
   display: flex;
   min-width: 0; /* 防止 flex 子元素被压缩 */
   overflow: visible; /* 确保内容不被裁剪 */
+  align-self: start; /* 各自独立，不强制高度对齐 */
 }
 
 .calendar-wrapper :deep(.hexo-calendar-card) {
@@ -333,10 +334,12 @@ function getHighlightedSummary(post: Post): string {
   grid-template-columns: 1fr 400px; /* 扩大右侧区域，容纳更大的个人名片和侧边卡片 */
   gap: 32px; /* 增加间距，避免重叠 */
   align-items: start;
+  margin-top: 5px; /* 增大负边距，进一步抵消间隙 */
 }
 
 .posts-section {
   min-width: 0; /* 防止内容溢出 */
+  margin-top: -115px; /* 向上移动文章列表，缩小与热力图的间隙 */
 }
 
 .sidebar-section {
