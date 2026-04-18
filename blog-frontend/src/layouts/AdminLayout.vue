@@ -127,7 +127,8 @@ import {
   ShieldCheckmarkOutline,
   LinkOutline,
   ImagesOutline,
-  ListOutline
+  ListOutline,
+  MailOutline
 } from '@vicons/ionicons5'
 import { useAuthStore } from '@/stores'
 import { NIcon, useLoadingBar } from 'naive-ui'
@@ -231,6 +232,11 @@ const baseMenuOptions = [
     label: '用户管理',
     key: 'UserManage',
     icon: renderIcon(PeopleOutline)
+  },
+  {
+    label: '订阅者管理',
+    key: 'SubscriberManage',
+    icon: renderIcon(MailOutline)
   },
   {
     label: 'IP访问控制',
