@@ -587,6 +587,7 @@ html.dark .social-icon.disabled {
   background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
   z-index: -1;
   transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 22px;
 }
 
 .subscribe-button:hover::before {
