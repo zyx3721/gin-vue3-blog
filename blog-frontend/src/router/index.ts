@@ -29,6 +29,7 @@ const FriendLinks = () => import('@/pages/blog/FriendLinks.vue')
 const Moments = () => import('@/pages/blog/Moments.vue')
 const Chat = () => import('@/pages/blog/Chat.vue')
 const About = () => import('@/pages/blog/About.vue')
+const Subscribe = () => import('@/pages/blog/Subscribe.vue')
 
 // 认证页面
 const Login = () => import('@/pages/auth/Login.vue')
@@ -47,6 +48,7 @@ const UserManage = () => import('@/pages/admin/UserManage.vue')
 const SiteSettings = () => import('@/pages/admin/SiteSettings.vue')
 const MomentManage = () => import('@/pages/admin/MomentManage.vue')
 const ChatManage = () => import('@/pages/admin/ChatManage.vue')
+const SubscriberManage = () => import('@/pages/admin/SubscriberManage.vue')
 const IPAccessControl = () => import('@/pages/admin/IPAccessControl.vue')
 const FriendLinkManage = () => import('@/pages/admin/FriendLinkManage.vue')
 const AboutManage = () => import('@/pages/admin/AboutManage.vue')
@@ -123,6 +125,12 @@ const routes: RouteRecordRaw[] = [
         name: 'About',
         component: About,
         meta: { title: '关于我' }
+      },
+      {
+        path: 'subscribe',
+        name: 'Subscribe',
+        component: Subscribe,
+        meta: { title: '邮件订阅' }
       }
     ]
   },
@@ -237,6 +245,12 @@ const routes: RouteRecordRaw[] = [
         name: 'ChatManage',
         component: ChatManage,
         meta: { title: '聊天室管理', requiresAuth: true, requiresAdmin: true }
+      },
+      {
+        path: 'subscribers',
+        name: 'SubscriberManage',
+        component: SubscriberManage,
+        meta: { title: '订阅者管理', requiresAuth: true, requiresAdmin: true }
       },
       {
         path: 'ip-access-control',
