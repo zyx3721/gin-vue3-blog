@@ -835,11 +835,14 @@ watch(
 .calendar-card {
   height: 100%;
   overflow: visible; /* 允许提示框超出卡片边界显示 */
+  min-height: 420px; /* 增加最小高度 */
+  margin-bottom: 0; /* 移除底部外边距 */
 }
 
 /* 确保 n-card 内部的所有容器都允许提示框显示 */
 .calendar-card :deep(.n-card__content) {
   overflow: visible !important;
+  padding-bottom: 12px; /* 减小底部内边距 */
 }
 
 .calendar-card :deep(.n-card) {
