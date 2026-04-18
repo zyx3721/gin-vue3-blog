@@ -189,8 +189,7 @@ func (s *SubscriberService) sendArticleEmail(sub *model.Subscriber, article *mod
 
 // getBlogURL 获取博客前台地址
 func (s *SubscriberService) getBlogURL() string {
-	// TODO: 从配置中读取博客地址
-	return "http://localhost:3000"
+	return s.config.App.BlogURL
 }
 
 // getSiteName 获取网站名称
