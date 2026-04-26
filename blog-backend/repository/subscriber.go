@@ -94,3 +94,17 @@ func (r *SubscriberRepository) GetByID(ctx context.Context, id uint) (*model.Sub
 	}
 	return &subscriber, nil
 }
+
+// CountActive 统计活跃订阅者数量
+func (r *SubscriberRepository) CountActive(ctx context.Context) (int64, error) {
+	var count int64
+	err := db.DB.WithContext(ctx).Model(&model.Subscriber{}).Where("is_active = ?", true).Count(&count).Error
+	return count, err
+}
+
+// CountTotal 统计累积订阅者总数（包括已退订的用户）
+func (r *SubscriberRepository) CountTotal(ctx context.Context) (int64, error) {
+	var count int64
+	err := db.DB.WithContext(ctx).Model(&model.Subscriber{}).Count(&count).Error
+	return count, err
+}
