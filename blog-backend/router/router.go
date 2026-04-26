@@ -76,6 +76,7 @@ func SetupRouter() *gin.Engine {
 	albumHandler := handler.NewAlbumHandler()
 	operationLogHandler := handler.NewOperationLogHandler()
 	subscriberHandler := handler.NewSubscriberHandler(config.Cfg)
+	rssHandler := handler.NewRSSHandler(config.Cfg)
 
 	// 健康检查接口（用于服务监控和负载均衡器健康检查）
 	r.GET("/health", func(c *gin.Context) {
@@ -99,7 +100,8 @@ func SetupRouter() *gin.Engine {
 		setupMomentRoutes(api, momentHandler)                                                                                                                                                                                             // 说说路由
 		setupChatRoutes(api, chatHandler)                                                                                                                                                                                                 // 聊天室路由
 		setupSubscriberRoutes(api, subscriberHandler)                                                                                                                                                                                     // 邮件订阅路由
-		setupAdminRoutes(api, userHandler, postHandler, commentHandler, dashboardHandler, momentHandler, ipBlacklistHandler, ipWhitelistHandler, chatHandler, friendLinkHandler, friendLinkCategoryHandler, settingHandler, albumHandler, operationLogHandler, subscriberHandler) // 管理后台路由
+		setupRSSRoutes(api, rssHandler)                                                                                                                                                                                                   // RSS 订阅路由
+		setupAdminRoutes(api, userHandler, postHandler, commentHandler, dashboardHandler, momentHandler, ipBlacklistHandler, ipWhitelistHandler, chatHandler, friendLinkHandler, friendLinkCategoryHandler, settingHandler, albumHandler, operationLogHandler, subscriberHandler, rssHandler) // 管理后台路由
 	}
 
 	return r
@@ -393,7 +395,8 @@ func setupChatRoutes(api *gin.RouterGroup, h *handler.ChatHandler) {
 //   - albumHandler: 相册处理器实例
 //   - operationLogHandler: 操作日志处理器实例
 //   - subscriberHandler: 订阅者处理器实例
-func setupAdminRoutes(api *gin.RouterGroup, userHandler *handler.UserHandler, postHandler *handler.PostHandler, commentHandler *handler.CommentHandler, dashboardHandler *handler.DashboardHandler, momentHandler *handler.MomentHandler, ipBlacklistHandler *handler.IPBlacklistHandler, ipWhitelistHandler *handler.IPWhitelistHandler, chatHandler *handler.ChatHandler, friendLinkHandler *handler.FriendLinkHandler, friendLinkCategoryHandler *handler.FriendLinkCategoryHandler, settingHandler *handler.SettingHandler, albumHandler *handler.AlbumHandler, operationLogHandler *handler.OperationLogHandler, subscriberHandler *handler.SubscriberHandler) {
+//   - rssHandler: RSS 处理器实例
+func setupAdminRoutes(api *gin.RouterGroup, userHandler *handler.UserHandler, postHandler *handler.PostHandler, commentHandler *handler.CommentHandler, dashboardHandler *handler.DashboardHandler, momentHandler *handler.MomentHandler, ipBlacklistHandler *handler.IPBlacklistHandler, ipWhitelistHandler *handler.IPWhitelistHandler, chatHandler *handler.ChatHandler, friendLinkHandler *handler.FriendLinkHandler, friendLinkCategoryHandler *handler.FriendLinkCategoryHandler, settingHandler *handler.SettingHandler, albumHandler *handler.AlbumHandler, operationLogHandler *handler.OperationLogHandler, subscriberHandler *handler.SubscriberHandler, rssHandler *handler.RSSHandler) {
 	admin := api.Group("/admin")
 	// admin 路由基础权限：admin 或 super_admin
 	admin.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware())
@@ -495,6 +498,17 @@ func setupAdminRoutes(api *gin.RouterGroup, userHandler *handler.UserHandler, po
 			subscribers.GET("", subscriberHandler.List)
 			subscribers.DELETE("/:id", subscriberHandler.Delete)
 		}
+
+		// RSS 管理（仅超级管理员）
+		rssAdmin := admin.Group("/rss")
+		rssAdmin.Use(middleware.RoleRequiredMiddleware(constant.RoleSuperAdmin))
+		{
+			rssAdmin.GET("/config", rssHandler.GetConfig)
+			rssAdmin.PUT("/config", rssHandler.UpdateConfig)
+			rssAdmin.GET("/preview", rssHandler.Preview)
+			rssAdmin.POST("/clear-cache", rssHandler.ClearCache)
+			rssAdmin.GET("/stats", rssHandler.GetStats)
+		}
 	}
 }
 
@@ -506,7 +520,29 @@ func setupAdminRoutes(api *gin.RouterGroup, userHandler *handler.UserHandler, po
 func setupSubscriberRoutes(api *gin.RouterGroup, h *handler.SubscriberHandler) {
 	subscribe := api.Group("/subscribe")
 	{
-		subscribe.POST("", h.Subscribe)           // 订阅
+		subscribe.POST("", h.Subscribe)              // 订阅
 		subscribe.GET("/unsubscribe", h.Unsubscribe) // 退订
+		subscribe.GET("/stats", h.GetStats)          // 获取订阅统计信息（公开接口）
 	}
+}
+
+// setupRSSRoutes 配置 RSS 订阅路由
+// 功能说明：配置 RSS Feed 公开接口和管理后台接口
+// 参数:
+//   - api: API路由组
+//   - h: RSS 处理器实例
+func setupRSSRoutes(api *gin.RouterGroup, h *handler.RSSHandler) {
+	rss := api.Group("/rss")
+	{
+		// 公开 RSS Feed 接口
+		rss.GET("/posts.xml", h.GetPostsFeed)
+		rss.GET("/moments.xml", h.GetMomentsFeed)
+		rss.GET("/feed.xml", h.GetAllFeed)
+		rss.GET("/category/:id.xml", h.GetCategoryFeed)
+		rss.GET("/tag/:id.xml", h.GetTagFeed)
+		rss.GET("/status", h.GetStatus) // 获取 RSS 启用状态（公开接口）
+	}
+
+	// 根路径 RSS（兼容性）
+	api.GET("/feed.xml", h.GetAllFeed)
 }
