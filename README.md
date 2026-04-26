@@ -995,6 +995,7 @@ docker exec -i pg-prod pg_restore -U postgres -d blogdb --clean --if-exists < ba
 - **主题切换** - 支持亮色/暗色主题
 - **打赏功能** - 导航栏打赏按钮，点击弹出微信/支付宝收款码，未配置时提示暂未开放
 - **邮件订阅** - 支持用户订阅博客更新，文章发布时自动推送邮件通知，管理后台可管理订阅者
+- **RSS 订阅** - 提供标准 RSS Feed，支持文章订阅、说说订阅和全站订阅，管理后台可一键开启/关闭
 
 ### 7.1.2 技术特性
 
@@ -1161,6 +1162,49 @@ myBlog/
 - 未配置收款码时弹窗提示"暂未开放打赏功能"
 - 后台「网站设置 → 打赏配置」填入收款码图片 URL 即可生效，无需重启服务
 
+### 7.2.10 邮件订阅功能
+
+- **前台订阅页面**（`/subscribe`）
+  - 用户输入邮箱即可订阅博客更新
+  - 订阅成功后自动发送欢迎邮件
+  - 显示累积订阅总数（包括已退订用户）
+  - 支持邮件和 RSS 两种订阅方式切换
+- **邮件推送机制**
+  - 文章发布时自动向所有活跃订阅者推送邮件通知
+  - 邮件内容包含文章标题、摘要和阅读链接
+  - 邮件底部包含退订链接，用户可一键退订
+- **订阅者管理**（管理后台）
+  - 查看所有订阅者列表（邮箱、订阅时间、状态）
+  - 支持删除订阅者
+  - 显示活跃订阅者数量和累积订阅总数
+- **技术实现**
+  - 基于 SMTP 协议发送邮件（支持 QQ 邮箱、163 邮箱等）
+  - 异步发送邮件，不阻塞文章发布流程
+  - 退订 Token 机制，确保退订链接安全性
+
+### 7.2.11 RSS 订阅功能
+
+- **RSS Feed 类型**
+  - 全站 Feed：`/api/feed.xml`（文章 + 说说）
+  - 文章 Feed：`/api/rss/posts.xml`
+  - 说说 Feed：`/api/rss/moments.xml`
+  - 分类 Feed：`/api/rss/category/:id.xml`
+  - 标签 Feed：`/api/rss/tag/:id.xml`
+- **前台订阅页面**
+  - 点击 RSS 订阅按钮跳转到 Feed 地址
+  - 后台关闭 RSS 功能时，前端自动禁用 RSS 订阅按钮并显示提示
+  - 用户可使用任意 RSS 阅读器订阅（Feedly、Inoreader 等）
+- **RSS 配置管理**（管理后台）
+  - 一键开启/关闭 RSS 订阅功能
+  - 关闭后所有 RSS Feed 接口返回 500 错误，已订阅用户无法继续获取更新
+  - 支持预览 RSS Feed 内容
+  - 支持清除 RSS 缓存（立即生效最新配置）
+- **技术实现**
+  - 基于 RSS 2.0 标准生成 XML Feed
+  - Redis 缓存机制（15 分钟过期），提升访问性能
+  - 自动过滤草稿和私密内容
+  - RSS 是无状态协议，无法统计订阅人数
+
 
 
 # 八、技术栈
@@ -1326,7 +1370,34 @@ myBlog/
 - `GET /api/chat/messages` - 获取消息列表
 - `GET /api/chat/online` - 获取在线信息
 
-## 9.13 管理后台相关
+## 9.13 邮件订阅相关
+
+- `POST /api/subscribe` - 订阅博客更新（公开接口）
+  - 请求体：`{ "email": "user@example.com" }`
+  - 订阅成功后自动发送欢迎邮件
+- `GET /api/subscribe/unsubscribe?token={token}` - 退订（公开接口）
+  - 通过邮件中的退订链接访问
+- `GET /api/subscribe/stats` - 获取订阅统计信息（公开接口）
+  - 返回累积订阅总数和活跃订阅者数量
+- `GET /api/admin/subscribers` - 获取订阅者列表（管理员）
+  - 支持分页查询
+- `DELETE /api/admin/subscribers/:id` - 删除订阅者（管理员）
+
+## 9.14 RSS 订阅相关
+
+- `GET /api/feed.xml` - 全站 RSS Feed（文章 + 说说）
+- `GET /api/rss/posts.xml` - 文章 RSS Feed
+- `GET /api/rss/moments.xml` - 说说 RSS Feed
+- `GET /api/rss/category/:id.xml` - 分类 RSS Feed
+- `GET /api/rss/tag/:id.xml` - 标签 RSS Feed
+- `GET /api/rss/status` - 获取 RSS 启用状态（公开接口）
+- `GET /api/admin/rss/config` - 获取 RSS 配置（管理员）
+- `PUT /api/admin/rss/config` - 更新 RSS 配置（管理员）
+- `GET /api/admin/rss/preview?type={type}` - 预览 RSS Feed（管理员）
+- `POST /api/admin/rss/clear-cache` - 清除 RSS 缓存（管理员）
+- `GET /api/admin/rss/stats` - 获取 RSS 统计信息（管理员）
+
+## 9.15 管理后台相关
 
 - `GET /api/admin/dashboard/stats` - 仪表盘统计
 - `GET /api/admin/dashboard/category-stats` - 分类统计
@@ -1336,7 +1407,7 @@ myBlog/
 - `PUT /api/admin/users/:id/role` - 更新用户角色（仅超级管理员）
 - `DELETE /api/admin/users/:id` - 删除用户（仅超级管理员）
 
-## 9.14 操作日志相关（仅超级管理员）
+## 9.16 操作日志相关（仅超级管理员）
 
 - `GET /api/admin/operation-logs` - 获取操作日志列表（支持分页和筛选）
   - 查询参数：`page`、`page_size`、`module`、`action`、`username`
