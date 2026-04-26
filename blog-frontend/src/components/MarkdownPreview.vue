@@ -17,6 +17,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick, onBeforeUnmount } from 'vue'
 import { useMessage } from 'naive-ui'
+import { VMdPreview } from '@/plugins/v-md-editor'
 
 interface Props {
   content: string

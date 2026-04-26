@@ -13,7 +13,7 @@ import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import App from './App.vue'
 import router from './router'
-import { VMdEditor, VMdPreview } from './plugins/v-md-editor'
+// v-md-editor 移除全局注册，改为按需导入
 import { getPublicSettings } from './api/setting'
 
 // 样式
@@ -27,8 +27,7 @@ pinia.use(piniaPluginPersistedstate)
 
 app.use(pinia)
 app.use(router)
-app.use(VMdEditor)
-app.use(VMdPreview)
+// v-md-editor 已移除全局注册，在需要的组件中按需导入
 
 // 先挂载应用（此时 loading 默认为 true，会显示加载动画）
 app.mount('#app')

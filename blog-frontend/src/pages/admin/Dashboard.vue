@@ -105,8 +105,26 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMessage } from 'naive-ui'
-import * as echarts from 'echarts'
-import type { ECharts } from 'echarts'
+// echarts 按需导入
+import * as echarts from 'echarts/core'
+import { PieChart, LineChart } from 'echarts/charts'
+import {
+  TooltipComponent,
+  LegendComponent,
+  GridComponent
+} from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+import type { ECharts } from 'echarts/core'
+
+// 注册必需的组件
+echarts.use([
+  PieChart,
+  LineChart,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent,
+  CanvasRenderer
+])
 import {
   DocumentTextOutline,
   PeopleOutline,
