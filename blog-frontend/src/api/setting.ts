@@ -22,11 +22,10 @@ export interface SiteSettings {
   social_github?: string        // GitHub链接
   social_gitee?: string        // Gitee链接
   social_email?: string        // 邮箱
-  social_rss?: string          // RSS链接
   social_qq?: string           // QQ号
   social_wechat?: string       // 微信号
   social_csdn?: string         // CSDN链接
-  social_link_order?: string   // 社交链接排序顺序，逗号分隔的类型列表，如 "github,gitee,email,rss,csdn,qq,wechat"
+  social_link_order?: string   // 社交链接排序顺序，逗号分隔的类型列表，如 "github,gitee,email,csdn,qq,wechat"
   reward_wechat?: string       // 微信收款码图片URL
   reward_alipay?: string       // 支付宝收款码图片URL
   // 封面设置

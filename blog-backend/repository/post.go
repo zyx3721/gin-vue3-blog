@@ -158,6 +158,17 @@ func (r *PostRepository) GetByTag(tagID uint, page, pageSize int) ([]model.Post,
 	return posts, total, err
 }
 
+// GetPublishedPostsByTag 根据标签ID获取已发布的文章列表（用于RSS）
+func (r *PostRepository) GetPublishedPostsByTag(tagID uint, limit int) ([]model.Post, error) {
+	var posts []model.Post
+	err := db.DB.Preload("User").Preload("Category").Preload("Tags").
+		Joins("JOIN post_tags ON posts.id = post_tags.post_id").
+		Where("post_tags.tag_id = ? AND posts.status = 1 AND posts.visibility = 1", tagID).
+		Order("posts.created_at DESC").
+		Limit(limit).Find(&posts).Error
+	return posts, err
+}
+
 // IncrementViewCount 增加浏览量
 func (r *PostRepository) IncrementViewCount(id uint) error {
 	return db.DB.Model(&model.Post{}).Where("id = ?", id).UpdateColumn("view_count", db.DB.Raw("view_count + 1")).Error

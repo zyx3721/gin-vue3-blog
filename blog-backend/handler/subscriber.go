@@ -97,3 +97,29 @@ func (h *SubscriberHandler) Delete(c *gin.Context) {
 
 	util.SuccessWithMessage(c, "删除成功", nil)
 }
+
+// GetStats 获取订阅统计信息（公开接口）
+// @Summary 获取订阅统计信息
+// @Description 获取活跃订阅者数量等统计信息
+// @Tags Subscribe
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /api/subscribe/stats [get]
+func (h *SubscriberHandler) GetStats(c *gin.Context) {
+	totalCount, err := h.service.GetTotalCount(c.Request.Context())
+	if err != nil {
+		util.ServerError(c, "获取统计信息失败")
+		return
+	}
+
+	activeCount, err := h.service.GetActiveCount(c.Request.Context())
+	if err != nil {
+		util.ServerError(c, "获取统计信息失败")
+		return
+	}
+
+	util.Success(c, gin.H{
+		"total_count":  totalCount,  // 累积订阅总数（包括已退订）
+		"active_count": activeCount, // 当前活跃订阅者数量
+	})
+}

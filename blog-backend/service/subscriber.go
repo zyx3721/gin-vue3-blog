@@ -207,3 +207,13 @@ func (s *SubscriberService) getSiteName() string {
 
 	return "菱风叙"
 }
+
+// GetActiveCount 获取活跃订阅者数量（公开接口）
+func (s *SubscriberService) GetActiveCount(ctx context.Context) (int64, error) {
+	return s.repo.CountActive(ctx)
+}
+
+// GetTotalCount 获取累积订阅者总数（公开接口，包括已退订的用户）
+func (s *SubscriberService) GetTotalCount(ctx context.Context) (int64, error) {
+	return s.repo.CountTotal(ctx)
+}

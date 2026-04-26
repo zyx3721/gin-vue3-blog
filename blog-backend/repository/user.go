@@ -91,3 +91,10 @@ func (r *UserRepository) GetAdmins() ([]model.User, error) {
 	err := db.DB.Where("role IN ? AND status = ?", []string{constant.RoleAdmin, constant.RoleSuperAdmin}, 1).Find(&admins).Error
 	return admins, err
 }
+
+// GetSuperAdmin 获取超级管理员用户
+func (r *UserRepository) GetSuperAdmin() (*model.User, error) {
+	var admin model.User
+	err := db.DB.Where("role = ? AND status = ?", constant.RoleSuperAdmin, 1).First(&admin).Error
+	return &admin, err
+}

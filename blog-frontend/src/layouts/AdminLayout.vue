@@ -234,7 +234,7 @@ const baseMenuOptions = [
     icon: renderIcon(PeopleOutline)
   },
   {
-    label: '订阅者管理',
+    label: '订阅管理',
     key: 'SubscriberManage',
     icon: renderIcon(MailOutline)
   },
