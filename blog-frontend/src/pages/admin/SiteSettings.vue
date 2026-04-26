@@ -128,21 +128,6 @@
           </n-input>
         </n-form-item>
 
-        <n-form-item label="RSS链接" path="social_rss">
-          <n-input
-            v-model:value="formData.social_rss"
-            placeholder="例如：https://example.com/rss.xml"
-            maxlength="200"
-            clearable
-          >
-            <template #suffix>
-              <n-button text size="tiny" @click="clearField('social_rss')" type="error">
-                清空
-              </n-button>
-            </template>
-          </n-input>
-        </n-form-item>
-
         <n-form-item label="CSDN链接" path="social_csdn">
           <n-input
             v-model:value="formData.social_csdn"
@@ -464,7 +449,6 @@ const defaultFormData = {
   social_github: '',
   social_gitee: '',
   social_email: '',
-  social_rss: '',
   social_csdn: '',
   social_qq: '',
   social_wechat: '',
@@ -482,7 +466,6 @@ const formData = ref({
   social_github: '',
   social_gitee: '',
   social_email: '',
-  social_rss: '',
   social_csdn: '',
   social_qq: '',
   social_wechat: '',
@@ -514,7 +497,6 @@ const socialLinkConfig = [
   { type: 'github', key: 'social_github', label: 'GitHub' },
   { type: 'gitee', key: 'social_gitee', label: 'Gitee' },
   { type: 'email', key: 'social_email', label: '邮箱' },
-  { type: 'rss', key: 'social_rss', label: 'RSS' },
   { type: 'csdn', key: 'social_csdn', label: 'CSDN' },
   { type: 'qq', key: 'social_qq', label: 'QQ' },
   { type: 'wechat', key: 'social_wechat', label: '微信' }
@@ -635,7 +617,6 @@ async function fetchSettings() {
         social_github: res.data.social_github || '',
         social_gitee: res.data.social_gitee || '',
         social_email: res.data.social_email || '',
-        social_rss: res.data.social_rss || '',
         social_csdn: res.data.social_csdn || '',
         social_qq: res.data.social_qq || '',
         social_wechat: res.data.social_wechat || '',
@@ -788,7 +769,6 @@ watch(
     formData.value.social_github,
     formData.value.social_gitee,
     formData.value.social_email,
-    formData.value.social_rss,
     formData.value.social_csdn,
     formData.value.social_qq,
     formData.value.social_wechat
