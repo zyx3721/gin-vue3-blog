@@ -606,6 +606,20 @@ VALUES
 ('about_content', '', 'text', 'about', '关于我内容', NOW(), NOW())
 ON CONFLICT (key) DO NOTHING;
 
+-- 插入 RSS 订阅配置
+INSERT INTO settings (key, value, type, "group", label, created_at, updated_at)
+VALUES
+('rss_enabled', '1', 'text', 'rss', 'RSS功能启用', NOW(), NOW()),
+('rss_title', '', 'text', 'rss', 'RSS标题', NOW(), NOW()),
+('rss_description', '', 'text', 'rss', 'RSS描述', NOW(), NOW()),
+('rss_language', 'zh-CN', 'text', 'rss', 'RSS语言', NOW(), NOW()),
+('rss_copyright', '', 'text', 'rss', 'RSS版权信息', NOW(), NOW()),
+('rss_author_name', '', 'text', 'rss', 'RSS作者名称', NOW(), NOW()),
+('rss_author_email', '', 'text', 'rss', 'RSS作者邮箱', NOW(), NOW()),
+('rss_item_count', '20', 'text', 'rss', 'RSS文章数量', NOW(), NOW()),
+('rss_cache_duration', '60', 'text', 'rss', 'RSS缓存时长(分钟)', NOW(), NOW())
+ON CONFLICT (key) DO NOTHING;
+
 -- =============================================================================
 -- 相册系统
 -- =============================================================================
