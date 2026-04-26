@@ -250,7 +250,7 @@ const routes: RouteRecordRaw[] = [
         path: 'subscribers',
         name: 'SubscriberManage',
         component: SubscriberManage,
-        meta: { title: '订阅者管理', requiresAuth: true, requiresAdmin: true }
+        meta: { title: '订阅管理', requiresAuth: true, requiresAdmin: true }
       },
       {
         path: 'ip-access-control',
