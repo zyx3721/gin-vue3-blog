@@ -158,7 +158,7 @@ import { NIcon } from 'naive-ui'
 import { MailOutline } from '@vicons/ionicons5'
 
 const MAX_SOCIAL_LINKS = 5
-type SocialLinkType = 'github' | 'gitee' | 'email' | 'rss' | 'csdn' | 'qq' | 'wechat'
+type SocialLinkType = 'github' | 'gitee' | 'email' | 'csdn' | 'qq' | 'wechat'
 interface SocialLink {
   type: SocialLinkType
   href?: string
@@ -171,7 +171,6 @@ const socialLinks = ref({
   github: '',
   gitee: '',
   email: '',
-  rss: '',
   csdn: '',
   qq: '',
   wechat: ''
@@ -188,7 +187,6 @@ const socialLinkMap: Record<string, { href?: (val: string) => string; title: str
   github: { href: (val) => val, title: 'GitHub' },
   gitee: { href: (val) => val, title: 'Gitee' },
   email: { href: (val) => `mailto:${val}`, title: 'Email' },
-  rss: { href: (val) => val, title: 'RSS' },
   csdn: { href: (val) => val, title: 'CSDN' },
   qq: { title: 'QQ' },
   wechat: { title: '微信' }
@@ -200,9 +198,9 @@ const visibleSocialLinks = computed<SocialLink[]>(() => {
   const data = socialLinks.value
 
   // 确定排序顺序：优先使用保存的顺序，否则使用默认顺序
-  const order = socialLinkOrder.value.length > 0 
-    ? socialLinkOrder.value 
-    : ['github', 'gitee', 'email', 'rss', 'csdn', 'qq', 'wechat']
+  const order = socialLinkOrder.value.length > 0
+    ? socialLinkOrder.value
+    : ['github', 'gitee', 'email', 'csdn', 'qq', 'wechat']
   
   // 按照排序顺序添加链接
   for (const type of order) {
@@ -296,7 +294,6 @@ async function fetchSettings() {
         github: (res.data.social_github || '').trim(),
         gitee: (res.data.social_gitee || '').trim(),
         email: (res.data.social_email || '').trim(),
-        rss: (res.data.social_rss || '').trim(),
         csdn: (res.data.social_csdn || '').trim(),
         qq: (res.data.social_qq || '').trim(),
         wechat: (res.data.social_wechat || '').trim()
