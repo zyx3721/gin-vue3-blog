@@ -66,6 +66,8 @@ import { ref, watch, computed, onMounted, nextTick } from 'vue'
 import { NButton, NSpace, NDivider } from 'naive-ui'
 import { uploadImage } from '@/api/upload'
 import { useMessage } from 'naive-ui'
+// 局部导入 v-md-editor
+import { VMdEditor } from '@/plugins/v-md-editor'
 
 interface Props {
   modelValue?: string
